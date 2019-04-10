@@ -39,6 +39,15 @@ export class Converter {
     } else if (tsType.isUnion()) {
       return adt.unionType(tsType.types.map(ty => this.convert(ty)));
     }
+    const callSignatures = this.checker.getSignaturesOfType(
+      tsType,
+      ts.SignatureKind.Call
+    );
+    if (callSignatures.length) {
+      return adt.functionType(
+        callSignatures.map(sig => this.convertSignature(sig))
+      );
+    }
     return this.untranslated(tsType);
   }
 
@@ -46,6 +55,26 @@ export class Converter {
     return {
       kind: adt.TypeKind.Untranslated,
       asString: this.checker.typeToString(tsType)
+    };
+  }
+
+  private convertSignature(tsSignature: ts.Signature): adt.Signature {
+    const parameters = tsSignature.parameters.map(parameter => {
+      const tsParamType = this.checker.getTypeOfSymbolAtLocation(
+        parameter,
+        parameter.valueDeclaration
+      );
+      return {
+        name: parameter.name,
+        type: this.convert(tsParamType)
+      };
+    });
+    const returnType = this.convert(
+      this.checker.getReturnTypeOfSignature(tsSignature)
+    );
+    return {
+      parameters,
+      returnType
     };
   }
 }

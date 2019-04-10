@@ -2,7 +2,9 @@ import * as adt from "../src/adt";
 import { Converter } from "../src/index";
 import * as ts from "typescript";
 // Parses the given string as source code.
-export function parse(source: string): ts.Program {
+export function parse(
+  source: string
+): { checker: ts.TypeChecker; sourceFile: ts.SourceFile } {
   const options: ts.CompilerOptions = {
     allowJs: true,
     target: ts.ScriptTarget.ES2019,
@@ -23,7 +25,11 @@ export function parse(source: string): ts.Program {
     },
     writeFile(_name, _text) {}
   };
-  return ts.createProgram(["input.ts"], options, inMemoryHost);
+  const program = ts.createProgram(["input.ts"], options, inMemoryHost);
+  return {
+    checker: program.getTypeChecker(),
+    sourceFile: program.getSourceFile("input.ts")!
+  };
 }
 
 // Returns the type of the variable with the given name. Only call this if
@@ -60,10 +66,15 @@ export function getTypeOf(
 
 // Parses the given source code, returning the type of the declared variable with the given name.
 export function parseAndGetType(name: string, source: string): adt.Type {
-  const prog = parse(source);
-  return getTypeOf(
-    name,
-    prog.getSourceFile("input.ts")!,
-    prog.getTypeChecker()
-  );
+  const { checker, sourceFile } = parse(source);
+  return getTypeOf(name, sourceFile, checker);
+}
+
+export function getTokenAtPosition(
+  file: ts.SourceFile,
+  position: number
+): ts.Node {
+  // This is an internal API but reimplementing it would require doing fiddly
+  // tree-traversal work.
+  return (ts as any).getTokenAtPosition(file, position);
 }

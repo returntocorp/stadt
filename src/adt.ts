@@ -1,3 +1,5 @@
+import * as ts from "typescript";
+
 export interface Type {
   kind: TypeKind;
 }
@@ -12,7 +14,10 @@ export enum TypeKind {
   Any = "any",
   Union = "union",
   Untranslated = "untranslated",
-  Literal = "literal"
+  Literal = "literal",
+  // This also includes functions/anything callable, since in JavaScript those
+  // are objects.
+  Object = "object"
 }
 
 // Non-object types that are built in to the JavaScript language (or to our type
@@ -54,6 +59,25 @@ export interface UntranslatedType extends Type {
   asString: string;
 }
 
+export interface ObjectType extends Type {
+  kind: TypeKind.Object;
+}
+
+export interface CallableType extends ObjectType {
+  // A callable type can have multiple signatures if it has overloads. For
+  // example, fs.readFileSync returns a Buffer if no encoding is passed, but a
+  // string if an encoding is set.
+  callSignatures: Signature[];
+}
+
+export interface Signature {
+  // Could there be any case where we can't find a reasonable name for a
+  // parameter?
+  parameters: { name: string; type: Type }[];
+  // Functions that don't return have voidType return type.
+  returnType: Type;
+}
+
 export const stringType: PrimitiveType = {
   kind: TypeKind.String
 };
@@ -76,6 +100,10 @@ export const anyType: PrimitiveType = {
   kind: TypeKind.Any
 };
 
+export function isCallable(ty: Type): ty is CallableType {
+  return (ty as any).callSignatures !== undefined;
+}
+
 export function unionType(types: Type[]): UnionType {
   return {
     kind: TypeKind.Union,
@@ -94,5 +122,12 @@ export function numberLiteralType(value: number): LiteralType {
   return {
     kind: TypeKind.Literal,
     value
+  };
+}
+
+export function functionType(signatures: Signature[]): CallableType {
+  return {
+    kind: TypeKind.Object,
+    callSignatures: signatures
   };
 }
