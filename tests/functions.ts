@@ -40,4 +40,66 @@ describe("function type handling", () => {
       adt.functionType([sig])
     );
   });
+
+  describe("signature collapsing", () => {
+    // Both TypeScript's DOM type declarations and its Node type declarations
+    // define `console.clear` to have type `() => void`. From a static analysis
+    // perspective, we don't really care about that. So we want to collapse
+    // all signatures that are identical.
+    it("should collapse duplicate signatures", () => {
+      const source = `
+declare function foo(): void;
+declare function foo(): void;
+`;
+      const { checker, sourceFile } = util.parse(source);
+      const token = util.getTokenAtPosition(sourceFile, source.indexOf("foo"));
+      const ty = new Converter(checker).convert(
+        checker.getTypeAtLocation(token)
+      );
+      assert(adt.isCallable(ty));
+      assert.lengthOf((ty as adt.CallableType).callSignatures, 1);
+    });
+
+    it("should collapse signatures that differ only in parameter names", () => {
+      const source = `
+declare function foo(x: number): void;
+declare function foo(y: number): void;
+`;
+      const { checker, sourceFile } = util.parse(source);
+      const token = util.getTokenAtPosition(sourceFile, source.indexOf("foo"));
+      const ty = new Converter(checker).convert(
+        checker.getTypeAtLocation(token)
+      );
+      assert(adt.isCallable(ty));
+      assert.lengthOf((ty as adt.CallableType).callSignatures, 1);
+    });
+
+    it("should not collapse signatures with different argument types", () => {
+      const source = `
+declare function foo(x: number): void;
+declare function foo(x: string): void;
+`;
+      const { checker, sourceFile } = util.parse(source);
+      const token = util.getTokenAtPosition(sourceFile, source.indexOf("foo"));
+      const ty = new Converter(checker).convert(
+        checker.getTypeAtLocation(token)
+      );
+      assert(adt.isCallable(ty));
+      assert.lengthOf((ty as adt.CallableType).callSignatures, 2);
+    });
+
+    it("should not collapse signatures with different return types", () => {
+      const source = `
+declare function foo(x: number): void;
+declare function foo(x: number): any;
+`;
+      const { checker, sourceFile } = util.parse(source);
+      const token = util.getTokenAtPosition(sourceFile, source.indexOf("foo"));
+      const ty = new Converter(checker).convert(
+        checker.getTypeAtLocation(token)
+      );
+      assert(adt.isCallable(ty));
+      assert.lengthOf((ty as adt.CallableType).callSignatures, 2);
+    });
+  });
 });

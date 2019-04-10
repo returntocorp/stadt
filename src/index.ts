@@ -1,5 +1,6 @@
 import * as adt from "./adt";
 import * as ts from "typescript";
+import * as deepEqual from "fast-deep-equal";
 
 export class Converter {
   private readonly checker: ts.TypeChecker;
@@ -44,9 +45,13 @@ export class Converter {
       ts.SignatureKind.Call
     );
     if (callSignatures.length) {
-      return adt.functionType(
-        callSignatures.map(sig => this.convertSignature(sig))
+      let convertedSignatures = callSignatures.map(sig =>
+        this.convertSignature(sig)
       );
+      if (callSignatures.length < 10) {
+        convertedSignatures = collapseSignatures(convertedSignatures);
+      }
+      return adt.functionType(convertedSignatures);
     }
     return this.untranslated(tsType);
   }
@@ -77,4 +82,38 @@ export class Converter {
       returnType
     };
   }
+}
+
+// Removes duplicate signatures. Signatures are duplicate if they only differ in
+// parameter names. NOTE: the algorithm used is O(n^2).
+function collapseSignatures(signatures: adt.Signature[]): adt.Signature[] {
+  if (signatures.length < 2) {
+    return signatures;
+  }
+  const collapsed = [signatures[0]];
+  for (let i = 1; i < signatures.length; i++) {
+    if (
+      collapsed.every(sig => !signaturesShouldBeCollapsed(sig, signatures[i]))
+    ) {
+      collapsed.push(signatures[i]);
+    }
+  }
+  return collapsed;
+}
+
+// Returns true if the two signatures are identical for our purposes. Two
+// signatures are identical if they only differ in parameter names.
+function signaturesShouldBeCollapsed(sigA: adt.Signature, sigB: adt.Signature) {
+  if (sigA.parameters.length != sigB.parameters.length) {
+    return false;
+  }
+  if (!deepEqual(sigA.returnType, sigB.returnType)) {
+    return false;
+  }
+  for (let i = 0; i < sigA.parameters.length; i++) {
+    if (!deepEqual(sigA.parameters[i].type, sigB.parameters[i].type)) {
+      return false;
+    }
+  }
+  return true;
 }

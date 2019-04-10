@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "description": "An ADT for TypeScript types.",
   "main": "dist/src/index.js",
-  "dependencies": {},
+  "dependencies": {
+    "fast-deep-equal": "^2.0.1"
+  },
   "devDependencies": {
     "@types/chai": "^4.1.7",
     "@types/mocha": "^5.2.6",
