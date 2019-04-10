@@ -5,6 +5,7 @@ import * as ts from "typescript";
 export function parse(source: string): ts.Program {
   const options: ts.CompilerOptions = {
     allowJs: true,
+    target: ts.ScriptTarget.ES2019,
     strict: true
   };
   const sourceFile = ts.createSourceFile(

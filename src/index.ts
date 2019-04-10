@@ -32,12 +32,12 @@ export class Converter {
       return adt.voidType;
     } else if (tsType.flags & ts.TypeFlags.Any) {
       return adt.anyType;
-    }
-    if (tsType.isUnion()) {
-      return {
-        kind: adt.TypeKind.Union,
-        types: tsType.types.map(ty => this.convert(ty))
-      } as adt.UnionType;
+    } else if (tsType.isStringLiteral()) {
+      return adt.stringLiteralType(tsType.value);
+    } else if (tsType.isNumberLiteral()) {
+      return adt.numberLiteralType(tsType.value);
+    } else if (tsType.isUnion()) {
+      return adt.unionType(tsType.types.map(ty => this.convert(ty)));
     }
     return this.untranslated(tsType);
   }

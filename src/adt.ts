@@ -75,3 +75,24 @@ export const voidType: PrimitiveType = {
 export const anyType: PrimitiveType = {
   kind: TypeKind.Any
 };
+
+export function unionType(types: Type[]): UnionType {
+  return {
+    kind: TypeKind.Union,
+    types
+  };
+}
+
+export function stringLiteralType(value: string): LiteralType {
+  return {
+    kind: TypeKind.Literal,
+    value
+  };
+}
+
+export function numberLiteralType(value: number): LiteralType {
+  return {
+    kind: TypeKind.Literal,
+    value
+  };
+}
