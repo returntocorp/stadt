@@ -65,6 +65,9 @@ export class Converter {
 
   private convertSignature(tsSignature: ts.Signature): adt.Signature {
     const parameters = tsSignature.parameters.map(parameter => {
+      // TODO: Can we distinguish optional parameters here? It's legal to pass
+      // `undefined` in place of an optional parameter, but that doesn't show up
+      // in tsParamType here.
       const tsParamType = this.checker.getTypeOfSymbolAtLocation(
         parameter,
         parameter.valueDeclaration
