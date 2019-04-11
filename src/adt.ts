@@ -61,19 +61,23 @@ export interface UntranslatedType extends Type {
 
 export interface ObjectType extends Type {
   kind: TypeKind.Object;
+  /// A callable type can have multiple signatures if it has overloads. For
+  /// example, fs.readFileSync returns a Buffer if no encoding is passed, but a
+  /// string if an encoding is set.
+  callSignatures?: Signature[];
 }
 
 export interface CallableType extends ObjectType {
-  // A callable type can have multiple signatures if it has overloads. For
-  // example, fs.readFileSync returns a Buffer if no encoding is passed, but a
-  // string if an encoding is set.
   callSignatures: Signature[];
 }
 
+export interface Parameter {
+  name: string;
+  type: Type;
+}
+
 export interface Signature {
-  // Could there be any case where we can't find a reasonable name for a
-  // parameter?
-  parameters: { name: string; type: Type }[];
+  parameters: Parameter[];
   // Functions that don't return have voidType return type.
   returnType: Type;
 }
@@ -100,8 +104,28 @@ export const anyType: PrimitiveType = {
   kind: TypeKind.Any
 };
 
+export function isPrimitive(ty: Type): ty is PrimitiveType {
+  return (
+    ty.kind === TypeKind.String ||
+    ty.kind === TypeKind.Number ||
+    ty.kind === TypeKind.Boolean ||
+    ty.kind === TypeKind.Null ||
+    ty.kind === TypeKind.Undefined ||
+    ty.kind === TypeKind.Void ||
+    ty.kind === TypeKind.Any
+  );
+}
+
+export function isObject(ty: Type): ty is ObjectType {
+  return ty.kind === TypeKind.Object;
+}
+
+export function isUnion(ty: Type): ty is UnionType {
+  return ty.kind === TypeKind.Union;
+}
+
 export function isCallable(ty: Type): ty is CallableType {
-  return (ty as any).callSignatures !== undefined;
+  return isObject(ty) && ty.callSignatures !== undefined;
 }
 
 export function unionType(types: Type[]): UnionType {
