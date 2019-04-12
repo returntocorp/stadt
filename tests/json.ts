@@ -5,6 +5,10 @@ import * as adtJSON from "../src/adt-json";
 import * as ts from "typescript";
 import * as util from "./util";
 
+function roundTrip(ty: adt.Type): adt.Type {
+  return adtJSON.fromJSON(adtJSON.toJSON(ty));
+}
+
 // Serializes and deserializes the given object, then asserts that the result is
 // deeply equal to the original.
 function checkRoundTrip(description: string, ty: adt.Type) {
@@ -45,5 +49,31 @@ describe("JSON serialization", () => {
       };
       checkRoundTrip("callable object type", adt.functionType([signature]));
     }
+
+    describe("object types", () => {
+      it("object with only required properties", () => {
+        const properties = [
+          {
+            name: "prop",
+            optional: false,
+            type: adt.stringType
+          }
+        ];
+        const ty = adt.objectType({ properties });
+        assert.deepEqual(roundTrip(ty), ty);
+      });
+
+      it("object with an optional property", () => {
+        const properties = [
+          {
+            name: "prop",
+            optional: true,
+            type: adt.stringType
+          }
+        ];
+        const ty = adt.objectType({ properties });
+        assert.deepEqual(roundTrip(ty), ty);
+      });
+    });
   });
 });

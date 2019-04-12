@@ -39,21 +39,39 @@ export class Converter {
       return adt.numberLiteralType(tsType.value);
     } else if (tsType.isUnion()) {
       return adt.unionType(tsType.types.map(ty => this.convert(ty)));
+    } else if (tsType.flags & ts.TypeFlags.Object) {
+      return this.convertObject(tsType);
     }
-    const callSignatures = this.checker.getSignaturesOfType(
+    return this.untranslated(tsType);
+  }
+
+  private convertObject(tsType: ts.Type): adt.ObjectType {
+    const properties: adt.Property[] = this.checker
+      .getPropertiesOfType(tsType)
+      .map(prop => {
+        const tsType = this.checker.getTypeOfSymbolAtLocation(
+          prop,
+          prop.valueDeclaration
+        );
+        const optional = (prop.flags & ts.SymbolFlags.Optional) != 0;
+        return {
+          name: prop.name,
+          optional,
+          type: this.convert(tsType)
+        };
+      });
+    const tsSignatures = this.checker.getSignaturesOfType(
       tsType,
       ts.SignatureKind.Call
     );
-    if (callSignatures.length) {
-      let convertedSignatures = callSignatures.map(sig =>
-        this.convertSignature(sig)
-      );
+    let callSignatures: adt.Signature[] | undefined;
+    if (tsSignatures.length) {
+      callSignatures = tsSignatures.map(sig => this.convertSignature(sig));
       if (callSignatures.length < 10) {
-        convertedSignatures = collapseSignatures(convertedSignatures);
+        callSignatures = collapseSignatures(callSignatures);
       }
-      return adt.functionType(convertedSignatures);
     }
-    return this.untranslated(tsType);
+    return adt.objectType({ properties, callSignatures });
   }
 
   private untranslated(tsType: ts.Type): adt.UntranslatedType {

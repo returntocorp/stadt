@@ -61,10 +61,22 @@ export interface UntranslatedType extends Type {
 
 export interface ObjectType extends Type {
   kind: TypeKind.Object;
+  properties: Map<string, Property>;
   /// A callable type can have multiple signatures if it has overloads. For
   /// example, fs.readFileSync returns a Buffer if no encoding is passed, but a
   /// string if an encoding is set.
   callSignatures?: Signature[];
+}
+
+export interface Property {
+  name: string;
+  optional: boolean;
+  // If a property is optional, then the type indicates the type of the
+  // property's value, including `undefined`. It's possible to have a property
+  // whose type includes `undefined` *and* whose value is optional, meaning both
+  // {x: undefined} and {} are legal and could potentially have different
+  // semantics to the program. It's probably a bad idea, but it's valid.
+  type: Type;
 }
 
 export interface CallableType extends ObjectType {
@@ -128,10 +140,18 @@ export function isCallable(ty: Type): ty is CallableType {
   return isObject(ty) && ty.callSignatures !== undefined;
 }
 
-export function objectType(callSignatures?: Signature[]): ObjectType {
+export function objectType(opts: {
+  properties?: Property[];
+  callSignatures?: Signature[];
+}): ObjectType {
+  const propertyMap = new Map<string, Property>();
+  for (const property of opts.properties || []) {
+    propertyMap.set(property.name, property);
+  }
   return {
     kind: TypeKind.Object,
-    callSignatures
+    properties: propertyMap,
+    callSignatures: opts.callSignatures
   };
 }
 
@@ -164,8 +184,7 @@ export function numberLiteralType(value: number): LiteralType {
 }
 
 export function functionType(signatures: Signature[]): CallableType {
-  return {
-    kind: TypeKind.Object,
+  return objectType({
     callSignatures: signatures
-  };
+  }) as CallableType;
 }

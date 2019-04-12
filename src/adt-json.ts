@@ -23,6 +23,12 @@ export function toJSON(ty: adt.Type): any {
     if (ty.callSignatures) {
       obj["callSignatures"] = ty.callSignatures.map(signatureToJSON);
     }
+    if (ty.properties.size != 0) {
+      obj["properties"] = [];
+      ty.properties.forEach(property =>
+        obj["properties"].push(propertyToJSON(property))
+      );
+    }
     return obj;
   }
   throw new Error(`Unhandled case ${ty.kind}`);
@@ -39,6 +45,14 @@ function parameterToJSON(parameter: adt.Parameter) {
   return {
     name: parameter.name,
     type: toJSON(parameter.type)
+  };
+}
+
+function propertyToJSON(property: adt.Property): object {
+  return {
+    name: property.name,
+    optional: property.optional,
+    type: toJSON(property.type)
   };
 }
 
@@ -68,11 +82,14 @@ export function fromJSON(typeJSON: any): adt.Type {
         asString: typeJSON.asString
       } as adt.UntranslatedType;
     case adt.TypeKind.Object: {
-      return adt.objectType(
-        typeJSON.callSignatures
-          ? typeJSON.callSignatures.map(signatureFromJSON)
-          : undefined
-      );
+      const properties = (typeJSON.properties || []).map(propertyFromJSON);
+      const callSignatures = typeJSON.callSignatures
+        ? typeJSON.callSignatures.map(signatureFromJSON)
+        : undefined;
+      return adt.objectType({
+        properties,
+        callSignatures
+      });
     }
   }
 }
@@ -88,5 +105,13 @@ export function parameterFromJSON(parameterJSON: any): adt.Parameter {
   return {
     name: parameterJSON.name,
     type: fromJSON(parameterJSON.type)
+  };
+}
+
+function propertyFromJSON(propertyJSON: any): adt.Property {
+  return {
+    name: propertyJSON.name,
+    optional: propertyJSON.optional,
+    type: fromJSON(propertyJSON.type)
   };
 }
