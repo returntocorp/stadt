@@ -128,10 +128,24 @@ export function isCallable(ty: Type): ty is CallableType {
   return isObject(ty) && ty.callSignatures !== undefined;
 }
 
+export function objectType(callSignatures?: Signature[]): ObjectType {
+  return {
+    kind: TypeKind.Object,
+    callSignatures
+  };
+}
+
 export function unionType(types: Type[]): UnionType {
   return {
     kind: TypeKind.Union,
     types
+  };
+}
+
+export function literalType(value: string | number): LiteralType {
+  return {
+    kind: TypeKind.Literal,
+    value
   };
 }
 
