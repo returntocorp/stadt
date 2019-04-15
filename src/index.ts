@@ -34,6 +34,8 @@ export class Converter {
       return adt.undefinedType;
     } else if (tsType.flags & ts.TypeFlags.Void) {
       return adt.voidType;
+    } else if (tsType.flags & ts.TypeFlags.Never) {
+      return adt.neverType;
     } else if (tsType.flags & ts.TypeFlags.Any) {
       return adt.anyType;
     } else if (tsType.isStringLiteral()) {

@@ -27,4 +27,14 @@ describe("primitive type handling", () => {
     const ty = util.parseAndGetType("foo", "const foo = Math.random() < 0.5");
     assert.deepEqual(ty, adt.booleanType);
   });
+  it("should convert the never type", () => {
+    const ty = util.parseAndGetType(
+      "foo",
+      `
+const array: never[] = [];
+const foo = array[0];
+`
+    );
+    assert.deepEqual(ty, adt.neverType);
+  });
 });

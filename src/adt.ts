@@ -11,6 +11,7 @@ export enum TypeKind {
   Null = "null",
   Undefined = "undefined",
   Void = "void",
+  Never = "never",
   Any = "any",
   Union = "union",
   Untranslated = "untranslated",
@@ -38,6 +39,7 @@ export interface PrimitiveType extends Type {
     | TypeKind.Null
     | TypeKind.Undefined
     | TypeKind.Void
+    | TypeKind.Never
     | TypeKind.Any;
 }
 
@@ -109,7 +111,7 @@ export interface Parameter {
 
 export interface Signature {
   parameters: Parameter[];
-  // Functions that don't return have voidType return type.
+  // Functions that don't return a value have void return type.
   returnType: Type;
 }
 
@@ -131,6 +133,9 @@ export const undefinedType: PrimitiveType = {
 export const voidType: PrimitiveType = {
   kind: TypeKind.Void
 };
+export const neverType: PrimitiveType = {
+  kind: TypeKind.Never
+};
 export const anyType: PrimitiveType = {
   kind: TypeKind.Any
 };
@@ -143,6 +148,7 @@ export function isPrimitive(ty: Type): ty is PrimitiveType {
     ty.kind === TypeKind.Null ||
     ty.kind === TypeKind.Undefined ||
     ty.kind === TypeKind.Void ||
+    ty.kind === TypeKind.Never ||
     ty.kind === TypeKind.Any
   );
 }

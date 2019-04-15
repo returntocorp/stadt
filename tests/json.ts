@@ -27,6 +27,7 @@ describe("JSON serialization", () => {
       checkRoundTrip("null type", adt.nullType);
       checkRoundTrip("undefined type", adt.undefinedType);
       checkRoundTrip("void type", adt.voidType);
+      checkRoundTrip("never type", adt.neverType);
       checkRoundTrip("any type", adt.anyType);
     });
 

@@ -74,6 +74,8 @@ export function fromJSON(typeJSON: any): adt.Type {
       return adt.undefinedType;
     case adt.TypeKind.Void:
       return adt.voidType;
+    case adt.TypeKind.Never:
+      return adt.neverType;
     case adt.TypeKind.Any:
       return adt.anyType;
     case adt.TypeKind.Union:
