@@ -41,6 +41,8 @@ export class Converter {
       return adt.unionType(tsType.types.map(ty => this.convert(ty)));
     } else if (tsType.flags & ts.TypeFlags.Object) {
       return this.convertObject(tsType as ts.ObjectType);
+    } else if (tsType.isTypeParameter) {
+      return adt.typeParameterType(tsType.symbol.name);
     }
     return this.untranslated(tsType);
   }

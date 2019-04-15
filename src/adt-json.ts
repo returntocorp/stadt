@@ -10,7 +10,8 @@ export function toJSON(ty: adt.Type): any {
     adt.isPrimitive(ty) ||
     ty.kind == adt.TypeKind.Untranslated ||
     ty.kind == adt.TypeKind.Literal ||
-    ty.kind == adt.TypeKind.Nominative
+    ty.kind == adt.TypeKind.Nominative ||
+    ty.kind == adt.TypeKind.Parameter
   ) {
     return ty;
   }
@@ -97,6 +98,9 @@ export function fromJSON(typeJSON: any): adt.Type {
         kind: adt.TypeKind.Nominative,
         name: typeJSON.name
       } as adt.NominativeType;
+    }
+    case adt.TypeKind.Parameter: {
+      return adt.typeParameterType(typeJSON.name);
     }
   }
 }

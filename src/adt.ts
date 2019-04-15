@@ -20,7 +20,8 @@ export enum TypeKind {
   Object = "object",
   // This is a type that's just a name. Objects constructed via `new Foo()` will
   // have nominative types.
-  Nominative = "nominative"
+  Nominative = "nominative",
+  Parameter = "parameter"
 }
 
 // Non-object types that are built in to the JavaScript language (or to our type
@@ -77,6 +78,13 @@ export interface NominativeType extends Type {
   // be unique.
   name: string;
   typeArguments: Type[];
+}
+
+// A type parameter is a parameter such as K or V that shows up in the
+// *definition* of a generic type.
+export interface TypeParameterType {
+  kind: TypeKind.Parameter;
+  name: string;
 }
 
 export interface Property {
@@ -208,5 +216,12 @@ export function nominativeType(
     kind: TypeKind.Nominative,
     name,
     typeArguments
+  };
+}
+
+export function typeParameterType(name: string): TypeParameterType {
+  return {
+    kind: TypeKind.Parameter,
+    name
   };
 }
