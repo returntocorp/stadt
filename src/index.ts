@@ -23,7 +23,10 @@ export class Converter {
       return adt.stringType;
     } else if (tsType.flags & ts.TypeFlags.Number) {
       return adt.numberType;
-    } else if (tsType.flags & ts.TypeFlags.Boolean) {
+    } else if (
+      tsType.flags &
+      (ts.TypeFlags.Boolean | ts.TypeFlags.BooleanLiteral)
+    ) {
       return adt.booleanType;
     } else if (tsType.flags & ts.TypeFlags.Null) {
       return adt.nullType;
@@ -41,7 +44,7 @@ export class Converter {
       return adt.unionType(tsType.types.map(ty => this.convert(ty)));
     } else if (tsType.flags & ts.TypeFlags.Object) {
       return this.convertObject(tsType as ts.ObjectType);
-    } else if (tsType.isTypeParameter) {
+    } else if (tsType.isTypeParameter()) {
       return adt.typeParameterType(tsType.symbol.name);
     }
     return this.untranslated(tsType);

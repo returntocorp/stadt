@@ -23,4 +23,8 @@ describe("primitive type handling", () => {
     const ty = util.parseAndGetType("foo", "const foo = undefined");
     assert.deepEqual(ty, adt.undefinedType);
   });
+  it("should convert the type of a boolean variable", () => {
+    const ty = util.parseAndGetType("foo", "const foo = Math.random() < 0.5");
+    assert.deepEqual(ty, adt.booleanType);
+  });
 });

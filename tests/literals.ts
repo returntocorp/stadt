@@ -11,4 +11,8 @@ describe("literal type handling", () => {
     const ty = util.parseAndGetType("foo", "const foo = 168");
     assert.deepEqual(ty, adt.numberLiteralType(168));
   });
+  it("should convert a boolean literal to the boolean type", () => {
+    const ty = util.parseAndGetType("foo", "const foo = false");
+    assert.deepEqual(ty, adt.booleanType);
+  });
 });
