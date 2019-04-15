@@ -45,7 +45,13 @@ export class Converter {
     return this.untranslated(tsType);
   }
 
-  private convertObject(tsType: ts.Type): adt.ObjectType {
+  private convertObject(tsType: ts.Type): adt.Type {
+    if (tsType.isClassOrInterface()) {
+      const sym = tsType.getSymbol();
+      return sym
+        ? adt.nominativeType(sym.getName())
+        : this.untranslated(tsType);
+    }
     const properties: adt.Property[] = this.checker
       .getPropertiesOfType(tsType)
       .map(prop => {

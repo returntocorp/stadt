@@ -9,7 +9,8 @@ export function toJSON(ty: adt.Type): any {
   if (
     adt.isPrimitive(ty) ||
     ty.kind == adt.TypeKind.Untranslated ||
-    ty.kind == adt.TypeKind.Literal
+    ty.kind == adt.TypeKind.Literal ||
+    ty.kind == adt.TypeKind.Nominative
   ) {
     return ty;
   }
@@ -90,6 +91,12 @@ export function fromJSON(typeJSON: any): adt.Type {
         properties,
         callSignatures
       });
+    }
+    case adt.TypeKind.Nominative: {
+      return {
+        kind: adt.TypeKind.Nominative,
+        name: typeJSON.name
+      } as adt.NominativeType;
     }
   }
 }

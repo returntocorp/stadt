@@ -17,7 +17,10 @@ export enum TypeKind {
   Literal = "literal",
   // This also includes functions/anything callable, since in JavaScript those
   // are objects.
-  Object = "object"
+  Object = "object",
+  // This is a type that's just a name. Objects constructed via `new Foo()` will
+  // have nominative types.
+  Nominative = "nominative"
 }
 
 // Non-object types that are built in to the JavaScript language (or to our type
@@ -66,6 +69,13 @@ export interface ObjectType extends Type {
   /// example, fs.readFileSync returns a Buffer if no encoding is passed, but a
   /// string if an encoding is set.
   callSignatures?: Signature[];
+}
+
+export interface NominativeType extends Type {
+  kind: TypeKind.Nominative;
+  // Human-readable name. This is not fully-qualified, so it's not guaranteed to
+  // be unique.
+  name: string;
 }
 
 export interface Property {
@@ -187,4 +197,11 @@ export function functionType(signatures: Signature[]): CallableType {
   return objectType({
     callSignatures: signatures
   }) as CallableType;
+}
+
+export function nominativeType(name: string): NominativeType {
+  return {
+    kind: TypeKind.Nominative,
+    name
+  };
 }
