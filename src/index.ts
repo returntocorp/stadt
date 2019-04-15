@@ -40,17 +40,15 @@ export class Converter {
     } else if (tsType.isUnion()) {
       return adt.unionType(tsType.types.map(ty => this.convert(ty)));
     } else if (tsType.flags & ts.TypeFlags.Object) {
-      return this.convertObject(tsType);
+      return this.convertObject(tsType as ts.ObjectType);
     }
     return this.untranslated(tsType);
   }
 
-  private convertObject(tsType: ts.Type): adt.Type {
-    if (tsType.isClassOrInterface()) {
-      const sym = tsType.getSymbol();
-      return sym
-        ? adt.nominativeType(sym.getName())
-        : this.untranslated(tsType);
+  private convertObject(tsType: ts.ObjectType): adt.Type {
+    const asNominativeType = this.asNominativeType(tsType);
+    if (asNominativeType) {
+      return asNominativeType;
     }
     const properties: adt.Property[] = this.checker
       .getPropertiesOfType(tsType)
@@ -109,6 +107,26 @@ export class Converter {
       returnType
     };
   }
+
+  // If this type has a name that we should use to reference it by, returns the
+  // appropriate nominative type.
+  private asNominativeType(
+    tsType: ts.ObjectType
+  ): adt.NominativeType | undefined {
+    if (
+      !tsType.isClassOrInterface() &&
+      !(tsType.objectFlags & ts.ObjectFlags.Reference)
+    ) {
+      return undefined;
+    }
+    const symbol = tsType.getSymbol();
+    if (!symbol) {
+      return undefined;
+    }
+    const name = symbol.getName();
+    const typeArguments = hasTypeArguments(tsType) ? tsType.typeArguments : [];
+    return adt.nominativeType(name, typeArguments.map(ty => this.convert(ty)));
+  }
 }
 
 // Removes duplicate signatures. Signatures are duplicate if they only differ in
@@ -143,4 +161,10 @@ function signaturesShouldBeCollapsed(sigA: adt.Signature, sigB: adt.Signature) {
     }
   }
   return true;
+}
+
+function hasTypeArguments(
+  tsType: ts.Type
+): tsType is ts.TypeReference & { typeArguments: ReadonlyArray<ts.Type> } {
+  return (tsType as any).typeArguments;
 }

@@ -76,6 +76,7 @@ export interface NominativeType extends Type {
   // Human-readable name. This is not fully-qualified, so it's not guaranteed to
   // be unique.
   name: string;
+  typeArguments: Type[];
 }
 
 export interface Property {
@@ -199,9 +200,13 @@ export function functionType(signatures: Signature[]): CallableType {
   }) as CallableType;
 }
 
-export function nominativeType(name: string): NominativeType {
+export function nominativeType(
+  name: string,
+  typeArguments: Type[] = []
+): NominativeType {
   return {
     kind: TypeKind.Nominative,
-    name
+    name,
+    typeArguments
   };
 }
