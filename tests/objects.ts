@@ -20,14 +20,14 @@ describe("object type handling", () => {
           type: adt.stringType
         }
       ];
-      assert.deepEqual(ty, adt.objectType({ properties }));
+      assert.deepEqual(ty, new adt.ObjectType(properties));
     });
   });
 
   describe("nominative types", () => {
     it("lists the type of a builtin using its name", () => {
       const ty = util.parseAndGetType("foo", "const foo = new Date()");
-      assert.deepEqual(ty, adt.nominativeType("Date"));
+      assert.deepEqual(ty, new adt.NominativeType("Date"));
     });
 
     it("lists a literal whose declared type is an interface using its name", () => {
@@ -38,7 +38,7 @@ interface Foo = { name: string };
 const foo: Foo = {name: "hello"};
 `
       );
-      assert.deepEqual(ty, adt.nominativeType("Foo"));
+      assert.deepEqual(ty, new adt.NominativeType("Foo"));
     });
 
     it("can handle a type with a recursive property", () => {
@@ -51,14 +51,14 @@ interface LinkedNode {
 };
 const foo: LinkedNode = { value: 123, next: {value: 456}}`
       );
-      assert.deepEqual(ty, adt.nominativeType("LinkedNode"));
+      assert.deepEqual(ty, new adt.NominativeType("LinkedNode"));
     });
   });
 
   describe("array types", () => {
     it("infers the type of an array, including the element type", () => {
       const ty = util.parseAndGetType("foo", "const foo = [1, 2, 3]");
-      assert.deepEqual(ty, adt.nominativeType("Array", [adt.numberType]));
+      assert.deepEqual(ty, new adt.NominativeType("Array", [adt.numberType]));
     });
   });
 });

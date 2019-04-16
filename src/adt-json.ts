@@ -7,7 +7,7 @@ import * as adt from "./adt";
 
 export function toJSON(ty: adt.Type): any {
   if (
-    adt.isPrimitive(ty) ||
+    ty.isPrimitive() ||
     ty.kind == adt.TypeKind.Untranslated ||
     ty.kind == adt.TypeKind.Literal ||
     ty.kind == adt.TypeKind.Nominative ||
@@ -15,10 +15,10 @@ export function toJSON(ty: adt.Type): any {
   ) {
     return ty;
   }
-  if (adt.isUnion(ty)) {
+  if (ty.isUnion()) {
     return { kind: ty.kind, types: ty.types.map(toJSON) };
   }
-  if (adt.isObject(ty)) {
+  if (ty.isObject()) {
     const obj: any = {
       kind: adt.TypeKind.Object
     };
@@ -61,7 +61,7 @@ function propertyToJSON(property: adt.Property): object {
 export function fromJSON(typeJSON: any): adt.Type {
   switch (typeJSON.kind as adt.TypeKind) {
     case adt.TypeKind.Literal:
-      return adt.literalType(typeJSON.value);
+      return new adt.LiteralType(typeJSON.value);
     case adt.TypeKind.String:
       return adt.stringType;
     case adt.TypeKind.Number:
@@ -79,30 +79,21 @@ export function fromJSON(typeJSON: any): adt.Type {
     case adt.TypeKind.Any:
       return adt.anyType;
     case adt.TypeKind.Union:
-      return adt.unionType(typeJSON.types.map(fromJSON));
+      return new adt.UnionType(typeJSON.types.map(fromJSON));
     case adt.TypeKind.Untranslated:
-      return {
-        kind: adt.TypeKind.Untranslated,
-        asString: typeJSON.asString
-      } as adt.UntranslatedType;
+      new adt.UntranslatedType(typeJSON.asString);
     case adt.TypeKind.Object: {
       const properties = (typeJSON.properties || []).map(propertyFromJSON);
       const callSignatures = typeJSON.callSignatures
         ? typeJSON.callSignatures.map(signatureFromJSON)
         : undefined;
-      return adt.objectType({
-        properties,
-        callSignatures
-      });
+      return new adt.ObjectType(properties, callSignatures);
     }
     case adt.TypeKind.Nominative: {
-      return {
-        kind: adt.TypeKind.Nominative,
-        name: typeJSON.name
-      } as adt.NominativeType;
+      return new adt.NominativeType(typeJSON.name);
     }
     case adt.TypeKind.Parameter: {
-      return adt.typeParameterType(typeJSON.name);
+      return new adt.TypeParameterType(typeJSON.name);
     }
   }
 }

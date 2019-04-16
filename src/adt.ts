@@ -1,8 +1,4 @@
-import * as ts from "typescript";
-
-export interface Type {
-  kind: TypeKind;
-}
+import * as assert from "assert";
 
 export enum TypeKind {
   String = "string",
@@ -25,68 +21,130 @@ export enum TypeKind {
   Parameter = "parameter"
 }
 
+export abstract class Type {
+  abstract kind: TypeKind;
+  isPrimitive(): this is PrimitiveType {
+    return (
+      this.kind === TypeKind.String ||
+      this.kind === TypeKind.Number ||
+      this.kind === TypeKind.Boolean ||
+      this.kind === TypeKind.Null ||
+      this.kind === TypeKind.Undefined ||
+      this.kind === TypeKind.Void ||
+      this.kind === TypeKind.Never ||
+      this.kind === TypeKind.Any
+    );
+  }
+  isObject(): this is ObjectType {
+    return this.kind === TypeKind.Object;
+  }
+  isUnion(): this is UnionType {
+    return this.kind === TypeKind.Union;
+  }
+}
+
 // Non-object types that are built in to the JavaScript language (or to our type
 // system).
-export interface PrimitiveType extends Type {
+export class PrimitiveType extends Type {
   // `void` is the bottom type, the return type of functions that never return.
   // `void` is a subtype of all types.
   //
   // `any` is the top type; all types are subtypes of it.
-  kind:
-    | TypeKind.String
-    | TypeKind.Number
-    | TypeKind.Boolean
-    | TypeKind.Null
-    | TypeKind.Undefined
-    | TypeKind.Void
-    | TypeKind.Never
-    | TypeKind.Any;
+  kind: PrimitiveKind;
+  constructor(kind: PrimitiveKind) {
+    super();
+    this.kind = kind;
+  }
 }
 
+type PrimitiveKind =
+  | TypeKind.String
+  | TypeKind.Number
+  | TypeKind.Boolean
+  | TypeKind.Null
+  | TypeKind.Undefined
+  | TypeKind.Void
+  | TypeKind.Never
+  | TypeKind.Any;
+
 // Represents the type of a string/numeric/boolean literal.
-export interface LiteralType extends Type {
-  kind: TypeKind.Literal;
+export class LiteralType extends Type {
+  kind = TypeKind.Literal;
   // TODO: boolean? It's a bit weird because TypeScript seems to define it as a
   // union of `false | true`.
   value: string | number;
+  constructor(value: string | number) {
+    super();
+    this.value = value;
+  }
 }
 
 // This type represents one of the given types.
-export interface UnionType extends Type {
-  kind: TypeKind.Union;
+export class UnionType extends Type {
+  kind = TypeKind.Union;
   types: Type[];
+  constructor(types: Type[]) {
+    super();
+    this.types = types;
+  }
 }
 
 // A type that stadt didn't know how to translate.
-export interface UntranslatedType extends Type {
-  kind: TypeKind.Untranslated;
+export class UntranslatedType extends Type {
+  kind = TypeKind.Untranslated;
   // TypeScript's representation of this type. Not machine-readable, just useful
   // for debugging.
   asString: string;
+  constructor(asString: string) {
+    super();
+    this.asString = asString;
+  }
 }
 
-export interface ObjectType extends Type {
-  kind: TypeKind.Object;
+export class ObjectType extends Type {
+  kind = TypeKind.Object;
   properties: Map<string, Property>;
   /// A callable type can have multiple signatures if it has overloads. For
   /// example, fs.readFileSync returns a Buffer if no encoding is passed, but a
   /// string if an encoding is set.
-  callSignatures?: Signature[];
+  callSignatures: Signature[];
+  constructor(properties: Property[], callSignatures: Signature[] = []) {
+    super();
+    this.properties = new Map();
+    properties.forEach(prop => this.properties.set(prop.name, prop));
+    this.callSignatures = callSignatures;
+  }
+  static newFunction(callSignatures: Signature[]) {
+    assert(callSignatures.length != 0);
+    return new ObjectType([], callSignatures);
+  }
+  isCallable(): boolean {
+    return this.callSignatures.length != 0;
+  }
 }
 
-export interface NominativeType extends Type {
-  kind: TypeKind.Nominative;
+export class NominativeType extends Type {
+  kind = TypeKind.Nominative;
   // Human-readable name. This is not fully-qualified, so it's not guaranteed to
   // be unique.
   name: string;
   typeArguments: Type[];
+  constructor(name: string, typeArguments: Type[] = []) {
+    super();
+    this.name = name;
+    this.typeArguments = typeArguments;
+  }
 }
 
 // A type parameter is a parameter such as K or V that shows up in the
 // *definition* of a generic type.
-export interface TypeParameterType {
-  kind: TypeKind.Parameter;
+export class TypeParameterType extends Type {
+  kind = TypeKind.Parameter;
   name: string;
+  constructor(name: string) {
+    super();
+    this.name = name;
+  }
 }
 
 export interface Property {
@@ -100,10 +158,6 @@ export interface Property {
   type: Type;
 }
 
-export interface CallableType extends ObjectType {
-  callSignatures: Signature[];
-}
-
 export interface Parameter {
   name: string;
   type: Type;
@@ -115,119 +169,11 @@ export interface Signature {
   returnType: Type;
 }
 
-export const stringType: PrimitiveType = {
-  kind: TypeKind.String
-};
-export const numberType: PrimitiveType = {
-  kind: TypeKind.Number
-};
-export const booleanType: PrimitiveType = {
-  kind: TypeKind.Boolean
-};
-export const nullType: PrimitiveType = {
-  kind: TypeKind.Null
-};
-export const undefinedType: PrimitiveType = {
-  kind: TypeKind.Undefined
-};
-export const voidType: PrimitiveType = {
-  kind: TypeKind.Void
-};
-export const neverType: PrimitiveType = {
-  kind: TypeKind.Never
-};
-export const anyType: PrimitiveType = {
-  kind: TypeKind.Any
-};
-
-export function isPrimitive(ty: Type): ty is PrimitiveType {
-  return (
-    ty.kind === TypeKind.String ||
-    ty.kind === TypeKind.Number ||
-    ty.kind === TypeKind.Boolean ||
-    ty.kind === TypeKind.Null ||
-    ty.kind === TypeKind.Undefined ||
-    ty.kind === TypeKind.Void ||
-    ty.kind === TypeKind.Never ||
-    ty.kind === TypeKind.Any
-  );
-}
-
-export function isObject(ty: Type): ty is ObjectType {
-  return ty.kind === TypeKind.Object;
-}
-
-export function isUnion(ty: Type): ty is UnionType {
-  return ty.kind === TypeKind.Union;
-}
-
-export function isCallable(ty: Type): ty is CallableType {
-  return isObject(ty) && ty.callSignatures !== undefined;
-}
-
-export function objectType(opts: {
-  properties?: Property[];
-  callSignatures?: Signature[];
-}): ObjectType {
-  const propertyMap = new Map<string, Property>();
-  for (const property of opts.properties || []) {
-    propertyMap.set(property.name, property);
-  }
-  return {
-    kind: TypeKind.Object,
-    properties: propertyMap,
-    callSignatures: opts.callSignatures
-  };
-}
-
-export function unionType(types: Type[]): UnionType {
-  return {
-    kind: TypeKind.Union,
-    types
-  };
-}
-
-export function literalType(value: string | number): LiteralType {
-  return {
-    kind: TypeKind.Literal,
-    value
-  };
-}
-
-export function stringLiteralType(value: string): LiteralType {
-  return {
-    kind: TypeKind.Literal,
-    value
-  };
-}
-
-export function numberLiteralType(value: number): LiteralType {
-  return {
-    kind: TypeKind.Literal,
-    value
-  };
-}
-
-export function functionType(signatures: Signature[]): CallableType {
-  return objectType({
-    callSignatures: signatures
-  }) as CallableType;
-}
-
-export function nominativeType(
-  name: string,
-  typeArguments: Type[] = []
-): NominativeType {
-  return {
-    kind: TypeKind.Nominative,
-    name,
-    typeArguments
-  };
-}
-
-export function typeParameterType(name: string): TypeParameterType {
-  return {
-    kind: TypeKind.Parameter,
-    name
-  };
-}
+export const stringType = new PrimitiveType(TypeKind.String);
+export const numberType = new PrimitiveType(TypeKind.Number);
+export const booleanType = new PrimitiveType(TypeKind.Boolean);
+export const nullType = new PrimitiveType(TypeKind.Null);
+export const undefinedType = new PrimitiveType(TypeKind.Undefined);
+export const voidType = new PrimitiveType(TypeKind.Void);
+export const neverType = new PrimitiveType(TypeKind.Never);
+export const anyType = new PrimitiveType(TypeKind.Any);

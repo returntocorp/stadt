@@ -11,6 +11,6 @@ const x = Math.random();
 const foo = x < 0.5 ? String(x) : x;
 `
     );
-    assert.deepEqual(ty, adt.unionType([adt.stringType, adt.numberType]));
+    assert.deepEqual(ty, new adt.UnionType([adt.stringType, adt.numberType]));
   });
 });

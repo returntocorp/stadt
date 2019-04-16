@@ -39,15 +39,15 @@ export class Converter {
     } else if (tsType.flags & ts.TypeFlags.Any) {
       return adt.anyType;
     } else if (tsType.isStringLiteral()) {
-      return adt.stringLiteralType(tsType.value);
+      return new adt.LiteralType(tsType.value);
     } else if (tsType.isNumberLiteral()) {
-      return adt.numberLiteralType(tsType.value);
+      return new adt.LiteralType(tsType.value);
     } else if (tsType.isUnion()) {
-      return adt.unionType(tsType.types.map(ty => this.convert(ty)));
+      return new adt.UnionType(tsType.types.map(ty => this.convert(ty)));
     } else if (tsType.flags & ts.TypeFlags.Object) {
       return this.convertObject(tsType as ts.ObjectType);
     } else if (tsType.isTypeParameter()) {
-      return adt.typeParameterType(tsType.symbol.name);
+      return new adt.TypeParameterType(tsType.symbol.name);
     }
     return this.untranslated(tsType);
   }
@@ -82,14 +82,11 @@ export class Converter {
         callSignatures = collapseSignatures(callSignatures);
       }
     }
-    return adt.objectType({ properties, callSignatures });
+    return new adt.ObjectType(properties, callSignatures);
   }
 
   private untranslated(tsType: ts.Type): adt.UntranslatedType {
-    return {
-      kind: adt.TypeKind.Untranslated,
-      asString: this.checker.typeToString(tsType)
-    };
+    return new adt.UntranslatedType(this.checker.typeToString(tsType));
   }
 
   private convertSignature(tsSignature: ts.Signature): adt.Signature {
@@ -132,7 +129,10 @@ export class Converter {
     }
     const name = symbol.getName();
     const typeArguments = hasTypeArguments(tsType) ? tsType.typeArguments : [];
-    return adt.nominativeType(name, typeArguments.map(ty => this.convert(ty)));
+    return new adt.NominativeType(
+      name,
+      typeArguments.map(ty => this.convert(ty))
+    );
   }
 }
 

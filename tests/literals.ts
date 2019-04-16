@@ -5,11 +5,11 @@ import * as util from "./util";
 describe("literal type handling", () => {
   it("should convert a string literal type", () => {
     const ty = util.parseAndGetType("foo", "const foo = 'asdf'");
-    assert.deepEqual(ty, adt.stringLiteralType("asdf"));
+    assert.deepEqual(ty, new adt.LiteralType("asdf"));
   });
   it("should convert a numeric literal type", () => {
     const ty = util.parseAndGetType("foo", "const foo = 168");
-    assert.deepEqual(ty, adt.numberLiteralType(168));
+    assert.deepEqual(ty, new adt.LiteralType(168));
   });
   it("should convert a boolean literal to the boolean type", () => {
     const ty = util.parseAndGetType("foo", "const foo = false");

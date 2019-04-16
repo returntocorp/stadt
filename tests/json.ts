@@ -31,24 +31,27 @@ describe("JSON serialization", () => {
       checkRoundTrip("any type", adt.anyType);
     });
 
-    checkRoundTrip("string literal", adt.stringLiteralType("foo bar"));
-    checkRoundTrip("number literal", adt.numberLiteralType(123456));
+    checkRoundTrip("string literal", new adt.LiteralType("foo bar"));
+    checkRoundTrip("number literal", new adt.LiteralType(123456));
 
     checkRoundTrip(
       "union type",
-      adt.unionType([adt.stringLiteralType("blah"), adt.undefinedType])
+      new adt.UnionType([new adt.LiteralType("blah"), adt.undefinedType])
     );
 
     {
       const parameters = [
         { name: "x", type: adt.stringType },
-        { name: "y", type: adt.unionType([adt.stringType, adt.numberType]) }
+        { name: "y", type: new adt.UnionType([adt.stringType, adt.numberType]) }
       ];
       const signature: adt.Signature = {
         parameters,
-        returnType: adt.unionType([adt.nullType, adt.undefinedType])
+        returnType: new adt.UnionType([adt.nullType, adt.undefinedType])
       };
-      checkRoundTrip("callable object type", adt.functionType([signature]));
+      checkRoundTrip(
+        "callable object type",
+        adt.ObjectType.newFunction([signature])
+      );
     }
 
     describe("object types", () => {
@@ -60,7 +63,7 @@ describe("JSON serialization", () => {
             type: adt.stringType
           }
         ];
-        const ty = adt.objectType({ properties });
+        const ty = new adt.ObjectType(properties);
         assert.deepEqual(roundTrip(ty), ty);
       });
 
@@ -72,7 +75,7 @@ describe("JSON serialization", () => {
             type: adt.stringType
           }
         ];
-        const ty = adt.objectType({ properties });
+        const ty = new adt.ObjectType(properties);
         assert.deepEqual(roundTrip(ty), ty);
       });
     });

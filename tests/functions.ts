@@ -11,7 +11,7 @@ describe("function type handling", () => {
       parameters: [{ name: "x", type: adt.anyType }],
       returnType: adt.numberType
     };
-    assert.deepEqual(ty, adt.functionType([sig]));
+    assert.deepEqual(ty, adt.ObjectType.newFunction([sig]));
   });
 
   it("should convert a method on a builtin", () => {
@@ -20,7 +20,7 @@ describe("function type handling", () => {
       parameters: [{ name: "x", type: adt.numberType }],
       returnType: adt.numberType
     };
-    assert.deepEqual(ty, adt.functionType([sig]));
+    assert.deepEqual(ty, adt.ObjectType.newFunction([sig]));
   });
 
   it("should convert a method on a builtin that's being invoked", () => {
@@ -37,7 +37,7 @@ describe("function type handling", () => {
     };
     assert.deepEqual(
       new Converter(checker).convert(ty),
-      adt.functionType([sig])
+      adt.ObjectType.newFunction([sig])
     );
   });
 
@@ -56,8 +56,8 @@ declare function foo(): void;
       const ty = new Converter(checker).convert(
         checker.getTypeAtLocation(token)
       );
-      assert(adt.isCallable(ty));
-      assert.lengthOf((ty as adt.CallableType).callSignatures, 1);
+      assert(ty.isObject());
+      assert.lengthOf((ty as adt.ObjectType).callSignatures, 1);
     });
 
     it("should collapse signatures that differ only in parameter names", () => {
@@ -70,8 +70,8 @@ declare function foo(y: number): void;
       const ty = new Converter(checker).convert(
         checker.getTypeAtLocation(token)
       );
-      assert(adt.isCallable(ty));
-      assert.lengthOf((ty as adt.CallableType).callSignatures, 1);
+      assert(ty.isObject());
+      assert.lengthOf((ty as adt.ObjectType).callSignatures, 1);
     });
 
     it("should not collapse signatures with different argument types", () => {
@@ -84,8 +84,8 @@ declare function foo(x: string): void;
       const ty = new Converter(checker).convert(
         checker.getTypeAtLocation(token)
       );
-      assert(adt.isCallable(ty));
-      assert.lengthOf((ty as adt.CallableType).callSignatures, 2);
+      assert(ty.isObject());
+      assert.lengthOf((ty as adt.ObjectType).callSignatures, 2);
     });
 
     it("should not collapse signatures with different return types", () => {
@@ -98,8 +98,8 @@ declare function foo(x: number): any;
       const ty = new Converter(checker).convert(
         checker.getTypeAtLocation(token)
       );
-      assert(adt.isCallable(ty));
-      assert.lengthOf((ty as adt.CallableType).callSignatures, 2);
+      assert(ty.isObject());
+      assert.lengthOf((ty as adt.ObjectType).callSignatures, 2);
     });
   });
 });
