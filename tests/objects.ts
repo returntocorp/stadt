@@ -26,8 +26,16 @@ describe("object type handling", () => {
 
   describe("nominative types", () => {
     it("lists the type of a builtin using its name", () => {
-      const ty = util.parseAndGetType("foo", "const foo = new Date()");
-      assert.deepEqual(ty, new adt.NominativeType("Date"));
+      let ty = util.parseAndGetType("foo", "const foo = new Date()");
+      assert.equal(ty.kind, adt.TypeKind.Nominative);
+      assert.deepEqual(
+        ty,
+        new adt.NominativeType("Date", {
+          fileName: "lib/lib.es5.d.ts",
+          name: "Date",
+          packageName: "typescript"
+        })
+      );
     });
 
     it("lists a literal whose declared type is an interface using its name", () => {
@@ -38,7 +46,9 @@ interface Foo = { name: string };
 const foo: Foo = {name: "hello"};
 `
       );
-      assert.deepEqual(ty, new adt.NominativeType("Foo"));
+      assert.equal(ty.kind, adt.TypeKind.Nominative);
+      console.log((ty as adt.NominativeType).fullyQualifiedName);
+      assert.propertyVal(ty, "name", "Foo");
     });
 
     it("can handle a type with a recursive property", () => {
@@ -51,7 +61,8 @@ interface LinkedNode {
 };
 const foo: LinkedNode = { value: 123, next: {value: 456}}`
       );
-      assert.deepEqual(ty, new adt.NominativeType("LinkedNode"));
+      assert.equal(ty.kind, adt.TypeKind.Nominative);
+      assert.propertyVal(ty, "name", "LinkedNode");
     });
   });
 

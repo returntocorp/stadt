@@ -4,7 +4,12 @@ import * as ts from "typescript";
 // Parses the given string as source code.
 export function parse(
   source: string
-): { checker: ts.TypeChecker; sourceFile: ts.SourceFile } {
+): {
+  checker: ts.TypeChecker;
+  sourceFile: ts.SourceFile;
+  host: ts.CompilerHost;
+  program: ts.Program;
+} {
   const options: ts.CompilerOptions = {
     allowJs: true,
     target: ts.ScriptTarget.ES2019,
@@ -28,18 +33,15 @@ export function parse(
   const program = ts.createProgram(["input.ts"], options, inMemoryHost);
   return {
     checker: program.getTypeChecker(),
-    sourceFile: program.getSourceFile("input.ts")!
+    sourceFile: program.getSourceFile("input.ts")!,
+    host: inMemoryHost,
+    program
   };
 }
 
-// Returns the type of the variable with the given name. Only call this if
-// there's exactly one variable with that name. Throws if no such variable
-// exists.
-export function getTypeOf(
-  name: string,
-  sourceFile: ts.SourceFile,
-  checker: ts.TypeChecker
-): adt.Type {
+// Parses the given source code, returning the type of the declared variable with the given name.
+export function parseAndGetType(name: string, source: string): adt.Type {
+  const { checker, sourceFile, host, program } = parse(source);
   let ty: ts.Type | undefined;
   function visit(node: ts.Node) {
     ts.isIdentifier;
@@ -58,16 +60,10 @@ export function getTypeOf(
   }
   ts.forEachChild(sourceFile, visit);
   if (ty) {
-    return new Converter(checker).convert(ty);
+    return new Converter(host, program).convert(ty);
   } else {
     throw new Error("Failed to find node with the proper name");
   }
-}
-
-// Parses the given source code, returning the type of the declared variable with the given name.
-export function parseAndGetType(name: string, source: string): adt.Type {
-  const { checker, sourceFile } = parse(source);
-  return getTypeOf(name, sourceFile, checker);
 }
 
 export function getTokenAtPosition(

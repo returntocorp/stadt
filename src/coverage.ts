@@ -13,6 +13,7 @@ function ellipsize(str: string) {
 // Yields all types found in the given source file and their conversions. This
 // makes a weak attempt at deduplication.
 function convertAll(
+  host: ts.CompilerHost,
   program: ts.Program,
   sourceFile: ts.SourceFile
 ): { ts: ts.Type; position: number; text: string; adt: adt.Type }[] {
@@ -24,7 +25,7 @@ function convertAll(
     adt: adt.Type;
   }[] = [];
   const seen: WeakSet<ts.Type> = new WeakSet();
-  const converter = new Converter(checker);
+  const converter = new Converter(host, program);
   function visit(node: ts.Node) {
     try {
       const tsType = checker.getTypeAtLocation(node);
@@ -59,12 +60,14 @@ if (require.main === module) {
   const options: ts.CompilerOptions = {
     allowJs: true,
     target: ts.ScriptTarget.ES2019,
-    strict: true
+    strict: true,
+    moduleResolution: ts.ModuleResolutionKind.NodeJs
   };
-  const program = ts.createProgram([fileName], options);
+  const host = ts.createCompilerHost(options);
+  const program = ts.createProgram([fileName], options, host);
   const checker = program.getTypeChecker();
   const sourceFile = program.getSourceFile(fileName)!;
-  const typePairs = convertAll(program, sourceFile);
+  const typePairs = convertAll(host, program, sourceFile);
   for (const typePair of typePairs) {
     const tsString = checker.typeToString(typePair.ts);
     const adtString = util.inspect(typePair.adt, {

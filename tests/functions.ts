@@ -25,7 +25,7 @@ describe("function type handling", () => {
 
   it("should convert a method on a builtin that's being invoked", () => {
     const source = "(new Date()).toUTCString()";
-    const { checker, sourceFile } = util.parse(source);
+    const { host, program, checker, sourceFile } = util.parse(source);
     const token = util.getTokenAtPosition(
       sourceFile,
       source.indexOf("toUTCString()")
@@ -36,7 +36,7 @@ describe("function type handling", () => {
       returnType: adt.stringType
     };
     assert.deepEqual(
-      new Converter(checker).convert(ty),
+      new Converter(host, program).convert(ty),
       adt.ObjectType.newFunction([sig])
     );
   });
@@ -51,9 +51,9 @@ describe("function type handling", () => {
 declare function foo(): void;
 declare function foo(): void;
 `;
-      const { checker, sourceFile } = util.parse(source);
+      const { checker, host, program, sourceFile } = util.parse(source);
       const token = util.getTokenAtPosition(sourceFile, source.indexOf("foo"));
-      const ty = new Converter(checker).convert(
+      const ty = new Converter(host, program).convert(
         checker.getTypeAtLocation(token)
       );
       assert(ty.isObject());
@@ -65,9 +65,9 @@ declare function foo(): void;
 declare function foo(x: number): void;
 declare function foo(y: number): void;
 `;
-      const { checker, sourceFile } = util.parse(source);
+      const { checker, host, program, sourceFile } = util.parse(source);
       const token = util.getTokenAtPosition(sourceFile, source.indexOf("foo"));
-      const ty = new Converter(checker).convert(
+      const ty = new Converter(host, program).convert(
         checker.getTypeAtLocation(token)
       );
       assert(ty.isObject());
@@ -79,9 +79,9 @@ declare function foo(y: number): void;
 declare function foo(x: number): void;
 declare function foo(x: string): void;
 `;
-      const { checker, sourceFile } = util.parse(source);
+      const { checker, host, program, sourceFile } = util.parse(source);
       const token = util.getTokenAtPosition(sourceFile, source.indexOf("foo"));
-      const ty = new Converter(checker).convert(
+      const ty = new Converter(host, program).convert(
         checker.getTypeAtLocation(token)
       );
       assert(ty.isObject());
@@ -93,9 +93,9 @@ declare function foo(x: string): void;
 declare function foo(x: number): void;
 declare function foo(x: number): any;
 `;
-      const { checker, sourceFile } = util.parse(source);
+      const { checker, host, program, sourceFile } = util.parse(source);
       const token = util.getTokenAtPosition(sourceFile, source.indexOf("foo"));
-      const ty = new Converter(checker).convert(
+      const ty = new Converter(host, program).convert(
         checker.getTypeAtLocation(token)
       );
       assert(ty.isObject());

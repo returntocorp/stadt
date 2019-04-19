@@ -90,7 +90,7 @@ export function fromJSON(typeJSON: any): adt.Type {
       return new adt.ObjectType(properties, callSignatures);
     }
     case adt.TypeKind.Nominative: {
-      return new adt.NominativeType(typeJSON.name);
+      return new adt.NominativeType(typeJSON.name, typeJSON.fullyQualifiedName);
     }
     case adt.TypeKind.Parameter: {
       return new adt.TypeParameterType(typeJSON.name);

@@ -1,12 +1,22 @@
 import * as adt from "./adt";
 import * as ts from "typescript";
+import * as path from "path";
 import * as deepEqual from "fast-deep-equal";
 
 export class Converter {
+  private readonly host: ts.CompilerHost;
+  private readonly program: ts.Program;
   private readonly checker: ts.TypeChecker;
+  private readonly sourceRoot: string | undefined;
   private readonly cache: WeakMap<ts.Type, adt.Type>;
-  constructor(checker: ts.TypeChecker) {
-    this.checker = checker;
+  // sourceRoot is the root directory of all source files of the code itself (as
+  // opposed to dependencies). It's used for relative-izing file names in fully
+  // qualified names. If not set, all paths are absolute.
+  constructor(host: ts.CompilerHost, program: ts.Program, sourceRoot?: string) {
+    this.host = host;
+    this.program = program;
+    this.checker = program.getTypeChecker();
+    this.sourceRoot = sourceRoot;
     this.cache = new WeakMap();
   }
 
@@ -131,8 +141,59 @@ export class Converter {
     const typeArguments = hasTypeArguments(tsType) ? tsType.typeArguments : [];
     return new adt.NominativeType(
       name,
+      this.fullyQualifiedName(symbol),
       typeArguments.map(ty => this.convert(ty))
     );
+  }
+
+  // Gets the fully qualified name of a symbol. This consists of the package
+  // that the symbol was defined in (which can either be local to the project or
+  // a dependency), the filename of its declaration, and the name of the symbol
+  // within that module. The same symbol is always guaranteed to have the same
+  // fully qualified name within a project, but different symbols might have the
+  // same fully qualified name because uniqueness is hard (consider classes
+  // returned by a function that generates classes).
+  private fullyQualifiedName(
+    symbol: ts.Symbol
+  ): { packageName: string | undefined; fileName: string; name: string } {
+    const declaration = symbol.declarations[0];
+    const declarationFile = declaration.getSourceFile();
+    const { resolvedModule } = ts.resolveModuleName(
+      stripExtension(declarationFile.fileName),
+      "",
+      this.program.getCompilerOptions(),
+      this.host
+    );
+    let packageName: string | undefined;
+    let fileName: string | undefined;
+    if (resolvedModule && resolvedModule.packageId) {
+      packageName = resolvedModule.packageId.name;
+      fileName = resolvedModule.packageId.subModuleName;
+    } else {
+      // This is either a module inside the project itself, or it's some really
+      // weird thing outside the scope of module resolution. Try to guess.
+      fileName = this.relativeToSourceRoot(declarationFile.fileName);
+    }
+
+    return {
+      packageName,
+      fileName,
+      name: symbol.getName()
+    };
+  }
+
+  // If fileName is in a subdirectory of this.sourceRoot, returns the relative
+  // path. Otherwise, returns fileName.
+  private relativeToSourceRoot(fileName: string): string {
+    if (!this.sourceRoot) {
+      return fileName;
+    }
+    const relative = path.relative(this.sourceRoot, fileName);
+    if (relative.startsWith(".." + path.sep) || relative == "..") {
+      return fileName;
+    } else {
+      return relative;
+    }
   }
 }
 
@@ -174,4 +235,21 @@ function hasTypeArguments(
   tsType: ts.Type
 ): tsType is ts.TypeReference & { typeArguments: ReadonlyArray<ts.Type> } {
   return (tsType as any).typeArguments;
+}
+
+// Removes all known TypeScript extensions from a file.
+function stripExtension(fileName: string): string {
+  // .d.ts has to be first so we check it before .ts
+  for (const extension of [
+    ts.Extension.Dts,
+    ts.Extension.Ts,
+    ts.Extension.Js,
+    ts.Extension.Jsx,
+    ts.Extension.Tsx
+  ]) {
+    if (fileName.endsWith(extension)) {
+      return fileName.slice(0, -extension.length);
+    }
+  }
+  return fileName;
 }

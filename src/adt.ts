@@ -128,10 +128,16 @@ export class NominativeType extends Type {
   // Human-readable name. This is not fully-qualified, so it's not guaranteed to
   // be unique.
   name: string;
+  fullyQualifiedName: any;
   typeArguments: Type[];
-  constructor(name: string, typeArguments: Type[] = []) {
+  constructor(
+    name: string,
+    fullyQualifiedName: any,
+    typeArguments: Type[] = []
+  ) {
     super();
     this.name = name;
+    this.fullyQualifiedName = fullyQualifiedName;
     this.typeArguments = typeArguments;
   }
 }
