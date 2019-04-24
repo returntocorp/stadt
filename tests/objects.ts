@@ -76,6 +76,22 @@ const foo: LinkedNode = { value: 123, next: {value: 456}}`
       assert.equal(ty.kind, adt.TypeKind.Nominative);
       assert.propertyVal(ty, "name", "LinkedNode");
     });
+
+    it("doesn't loop when given a namespace with itself as a member", () => {
+      const ty = util.parseAndGetType(
+        "foo",
+        `
+class Outer {}
+
+namespace Outer {
+export class Inner extends Outer {}
+}
+const foo = Outer;
+`
+      );
+      assert.equal(ty.kind, adt.TypeKind.Nominative);
+      assert.propertyVal(ty, "name", "Outer");
+    });
   });
 
   describe("array types", () => {
@@ -87,6 +103,21 @@ const foo: LinkedNode = { value: 123, next: {value: 456}}`
           adt.numberType
         ])
       );
+    });
+  });
+
+  describe("class objects", () => {
+    it("class object is not immediately assigned", () => {
+      const ty = util.parseAndGetType("foo", "class Foo {}; const foo = Foo");
+      assert.deepEqual(ty, new adt.TypeofType("Foo"));
+    });
+    it("class object is immediately assigned", () => {
+      const ty = util.parseAndGetType("foo", "const foo = class Foo {}");
+      assert.deepEqual(ty, new adt.TypeofType("Foo"));
+    });
+    it("class object is immediately assigned and anonymous", () => {
+      const ty = util.parseAndGetType("foo", "const foo = class {}");
+      assert.deepEqual(ty, new adt.TypeofType("__class"));
     });
   });
 });

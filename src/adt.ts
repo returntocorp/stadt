@@ -18,7 +18,8 @@ export enum TypeKind {
   // This is a type that's just a name. Objects constructed via `new Foo()` will
   // have nominative types.
   Nominative = "nominative",
-  Parameter = "parameter"
+  Parameter = "parameter",
+  Typeof = "typeof"
 }
 
 export abstract class Type {
@@ -37,6 +38,9 @@ export abstract class Type {
   }
   isObject(): this is ObjectType {
     return this.kind === TypeKind.Object;
+  }
+  isTypeof(): this is TypeofType {
+    return this.kind === TypeKind.Typeof;
   }
   isUnion(): this is UnionType {
     return this.kind === TypeKind.Union;
@@ -165,6 +169,18 @@ export class TypeParameterType extends Type {
   constructor(name: string) {
     super();
     this.name = name;
+  }
+}
+
+// An anonymous type produced by TypeScript's `typeof` operator. This can
+// commonly show up when looking at the types of class objects; `Date` has
+// typeof `typeof Date`.
+export class TypeofType extends Type {
+  kind = TypeKind.Typeof;
+  expression: string;
+  constructor(expression: string) {
+    super();
+    this.expression = expression;
   }
 }
 

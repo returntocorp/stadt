@@ -67,6 +67,10 @@ export class Converter {
     if (asNominativeType) {
       return asNominativeType;
     }
+    const asTypeofType = this.asTypeofType(tsType);
+    if (asTypeofType) {
+      return asTypeofType;
+    }
     const properties: adt.Property[] = this.checker
       .getPropertiesOfType(tsType)
       .map(prop => {
@@ -122,6 +126,18 @@ export class Converter {
     };
   }
 
+  // If this should be converted as a 'typeof type', returns that.
+  private asTypeofType(tsType: ts.ObjectType): adt.TypeofType | undefined {
+    const symbol = tsType.symbol;
+    if (!symbol) {
+      return;
+    }
+    if (symbol.flags & ts.SymbolFlags.Class) {
+      // It's a constructor.
+      return new adt.TypeofType(symbol.getName());
+    }
+  }
+
   // If this type has a name that we should use to reference it by, returns the
   // appropriate nominative type.
   private asNominativeType(
@@ -142,7 +158,8 @@ export class Converter {
     }
     if (
       !tsType.isClassOrInterface() &&
-      !(tsType.objectFlags & ts.ObjectFlags.Reference)
+      !(tsType.objectFlags & ts.ObjectFlags.Reference) &&
+      !(symbol.flags & ts.SymbolFlags.ValueModule)
     ) {
       return undefined;
     }

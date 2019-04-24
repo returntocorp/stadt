@@ -11,7 +11,8 @@ export function toJSON(ty: adt.Type): any {
     ty.kind == adt.TypeKind.Untranslated ||
     ty.kind == adt.TypeKind.Literal ||
     ty.kind == adt.TypeKind.Nominative ||
-    ty.kind == adt.TypeKind.Parameter
+    ty.kind == adt.TypeKind.Parameter ||
+    ty.kind == adt.TypeKind.Typeof
   ) {
     return ty;
   }
@@ -94,6 +95,9 @@ export function fromJSON(typeJSON: any): adt.Type {
     }
     case adt.TypeKind.Parameter: {
       return new adt.TypeParameterType(typeJSON.name);
+    }
+    case adt.TypeKind.Typeof: {
+      return new adt.TypeofType(typeJSON.expression);
     }
   }
 }
