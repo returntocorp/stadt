@@ -65,15 +65,7 @@ export class Converter {
     return this.untranslated(tsType);
   }
 
-  private convertObject(tsType: ts.ObjectType): adt.Type {
-    const asNominativeType = this.asNominativeType(tsType);
-    if (asNominativeType) {
-      return asNominativeType;
-    }
-    const asTypeofType = this.asTypeofType(tsType);
-    if (asTypeofType) {
-      return asTypeofType;
-    }
+  public typeDefinition(tsType: ts.ObjectType): adt.ObjectType {
     const properties: adt.Property[] = this.checker
       .getPropertiesOfType(tsType)
       .map(prop => {
@@ -100,6 +92,18 @@ export class Converter {
       }
     }
     return new adt.ObjectType(properties, callSignatures);
+  }
+
+  private convertObject(tsType: ts.ObjectType): adt.Type {
+    const asNominativeType = this.asNominativeType(tsType);
+    if (asNominativeType) {
+      return asNominativeType;
+    }
+    const asTypeofType = this.asTypeofType(tsType);
+    if (asTypeofType) {
+      return asTypeofType;
+    }
+    return this.typeDefinition(tsType);
   }
 
   // Constructs a type without even trying to translate it. This is public so
