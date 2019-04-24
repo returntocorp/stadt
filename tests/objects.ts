@@ -82,7 +82,12 @@ const foo: LinkedNode = { value: 123, next: {value: 456}}`
   describe("array types", () => {
     it("infers the type of an array, including the element type", () => {
       const ty = util.parseAndGetType("foo", "const foo = [1, 2, 3]");
-      assert.deepEqual(ty, new adt.NominativeType("Array", [adt.numberType]));
+      assert.deepEqual(
+        ty,
+        new adt.NominativeType("Array", { builtin: true, name: "Array" }, [
+          adt.numberType
+        ])
+      );
     });
   });
 });
