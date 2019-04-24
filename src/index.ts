@@ -127,14 +127,23 @@ export class Converter {
   private asNominativeType(
     tsType: ts.ObjectType
   ): adt.NominativeType | undefined {
+    if (tsType.aliasSymbol) {
+      const name = tsType.aliasSymbol.getName();
+      const typeArguments = tsType.aliasTypeArguments || [];
+      return new adt.NominativeType(
+        name,
+        this.fullyQualifiedName(tsType.aliasSymbol),
+        typeArguments.map(ty => this.convert(ty))
+      );
+    }
+    const symbol = tsType.getSymbol();
+    if (!symbol) {
+      return undefined;
+    }
     if (
       !tsType.isClassOrInterface() &&
       !(tsType.objectFlags & ts.ObjectFlags.Reference)
     ) {
-      return undefined;
-    }
-    const symbol = tsType.getSymbol();
-    if (!symbol) {
       return undefined;
     }
     const name = symbol.getName();

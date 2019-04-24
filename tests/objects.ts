@@ -42,12 +42,11 @@ describe("object type handling", () => {
       const ty = util.parseAndGetType(
         "foo",
         `
-interface Foo = { name: string };
+interface Foo { name: string };
 const foo: Foo = {name: "hello"};
 `
       );
       assert.equal(ty.kind, adt.TypeKind.Nominative);
-      console.log((ty as adt.NominativeType).fullyQualifiedName);
       assert.propertyVal(ty, "name", "Foo");
     });
 
@@ -58,6 +57,20 @@ const foo: Foo = {name: "hello"};
 interface LinkedNode {
   value: number,
   next?: LinkedNode
+};
+const foo: LinkedNode = { value: 123, next: {value: 456}}`
+      );
+      assert.equal(ty.kind, adt.TypeKind.Nominative);
+      assert.propertyVal(ty, "name", "LinkedNode");
+    });
+
+    it("can handle a type alias with a recursive property", () => {
+      const ty = util.parseAndGetType(
+        "foo",
+        `
+type LinkedNode = {
+value: number,
+next?: LinkedNode
 };
 const foo: LinkedNode = { value: 123, next: {value: 456}}`
       );
