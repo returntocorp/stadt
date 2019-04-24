@@ -102,14 +102,14 @@ export function fromJSON(typeJSON: any): adt.Type {
   }
 }
 
-export function signatureFromJSON(signatureJSON: any): adt.Signature {
+function signatureFromJSON(signatureJSON: any): adt.Signature {
   return {
     parameters: signatureJSON.parameters.map(parameterFromJSON),
     returnType: fromJSON(signatureJSON.returnType)
   };
 }
 
-export function parameterFromJSON(parameterJSON: any): adt.Parameter {
+function parameterFromJSON(parameterJSON: any): adt.Parameter {
   return {
     name: parameterJSON.name,
     type: fromJSON(parameterJSON.type)

@@ -3,6 +3,9 @@ import * as ts from "typescript";
 import * as path from "path";
 import * as deepEqual from "fast-deep-equal";
 
+export * from "./adt";
+export * from "./adt-json";
+
 export class Converter {
   private readonly host: ts.CompilerHost;
   private readonly program: ts.Program;
