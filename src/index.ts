@@ -99,7 +99,10 @@ export class Converter {
     return new adt.ObjectType(properties, callSignatures);
   }
 
-  private untranslated(tsType: ts.Type): adt.UntranslatedType {
+  // Constructs a type without even trying to translate it. This is public so
+  // that if `convert` throws due to a stack overflow or something, the caller
+  // can catch and then fall back to this method.
+  public untranslated(tsType: ts.Type): adt.UntranslatedType {
     return new adt.UntranslatedType(this.checker.typeToString(tsType));
   }
 
