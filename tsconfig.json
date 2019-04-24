@@ -3,6 +3,7 @@
     "target": "es2019",
     "strict": true,
     "outDir": "./dist",
-    "module": "commonjs"
+    "module": "commonjs",
+    "declaration": true
   }
 }

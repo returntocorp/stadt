@@ -2,7 +2,11 @@
   "name": "stadt",
   "version": "0.1.0",
   "description": "An ADT for TypeScript types.",
-  "main": "src/index.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
   "dependencies": {
     "fast-deep-equal": "^2.0.1"
   },
@@ -23,7 +27,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "mocha --extension \"ts\" --recursive -r ts-node/register tests/*.ts"
+    "test": "mocha --extension \"ts\" --recursive -r ts-node/register tests/*.ts",
+    "prepare": "npm run-script build"
   },
   "author": "r2c",
   "license": "UNLICENSED",
