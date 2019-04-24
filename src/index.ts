@@ -164,7 +164,12 @@ export class Converter {
   // returned by a function that generates classes).
   private fullyQualifiedName(
     symbol: ts.Symbol
-  ): { packageName: string | undefined; fileName: string; name: string } {
+  ): {
+    builtin: boolean;
+    packageName: string | undefined;
+    fileName: string | undefined;
+    name: string;
+  } {
     const declaration = symbol.declarations[0];
     const declarationFile = declaration.getSourceFile();
     const { resolvedModule } = ts.resolveModuleName(
@@ -175,16 +180,20 @@ export class Converter {
     );
     let packageName: string | undefined;
     let fileName: string | undefined;
-    if (resolvedModule && resolvedModule.packageId) {
-      packageName = resolvedModule.packageId.name;
-      fileName = resolvedModule.packageId.subModuleName;
-    } else {
-      // This is either a module inside the project itself, or it's some really
-      // weird thing outside the scope of module resolution. Try to guess.
-      fileName = this.relativeToSourceRoot(declarationFile.fileName);
+    const builtin = isTypeDefinitionForBuiltins(declarationFile.fileName);
+    if (!builtin) {
+      if (resolvedModule && resolvedModule.packageId) {
+        packageName = resolvedModule.packageId.name;
+        fileName = resolvedModule.packageId.subModuleName;
+      } else {
+        // This is either a module inside the project itself, or it's some really
+        // weird thing outside the scope of module resolution. Try to guess.
+        fileName = this.relativeToSourceRoot(declarationFile.fileName);
+      }
     }
 
     return {
+      builtin,
       packageName,
       fileName,
       name: symbol.getName()
@@ -261,4 +270,14 @@ function stripExtension(fileName: string): string {
     }
   }
   return fileName;
+}
+
+// Returns true if the type definition path (i.e., a .d.ts file) points to one
+// of TypeScript's definitions for builtins.
+function isTypeDefinitionForBuiltins(fileName: string): boolean {
+  const dir = path.dirname(fileName);
+  const parentDir = path.dirname(dir);
+  return (
+    path.basename(parentDir) === "typescript" && path.basename(dir) === "lib"
+  );
 }

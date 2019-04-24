@@ -31,9 +31,8 @@ describe("object type handling", () => {
       assert.deepEqual(
         ty,
         new adt.NominativeType("Date", {
-          fileName: "lib/lib.es5.d.ts",
-          name: "Date",
-          packageName: "typescript"
+          builtin: true,
+          name: "Date"
         })
       );
     });
