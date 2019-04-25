@@ -106,6 +106,14 @@ const foo = Outer;
     });
   });
 
+  it("interprets tuples specially", () => {
+    const ty = util.parseAndGetType(
+      "foo",
+      "const foo: [number, string] = [1, 'two']"
+    );
+    assert.deepEqual(ty, new adt.TupleType([adt.numberType, adt.stringType]));
+  });
+
   describe("class objects", () => {
     it("class object is not immediately assigned", () => {
       const ty = util.parseAndGetType("foo", "class Foo {}; const foo = Foo");

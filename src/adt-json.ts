@@ -34,6 +34,11 @@ export function toJSON(ty: adt.Type): any {
     }
     return obj;
   }
+  if (ty.isTuple()) {
+    return {
+      typeArguments: ty.typeArguments.map(toJSON)
+    };
+  }
   throw new Error(`Unhandled case ${ty.kind}`);
 }
 
@@ -98,6 +103,9 @@ export function fromJSON(typeJSON: any): adt.Type {
     }
     case adt.TypeKind.Typeof: {
       return new adt.TypeofType(typeJSON.expression);
+    }
+    case adt.TypeKind.Tuple: {
+      return new adt.TupleType(typeJSON.typeArguments.map(fromJSON));
     }
   }
 }

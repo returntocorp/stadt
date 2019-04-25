@@ -19,7 +19,8 @@ export enum TypeKind {
   // have nominative types.
   Nominative = "nominative",
   Parameter = "parameter",
-  Typeof = "typeof"
+  Typeof = "typeof",
+  Tuple = "tuple"
 }
 
 export abstract class Type {
@@ -44,6 +45,12 @@ export abstract class Type {
   }
   isUnion(): this is UnionType {
     return this.kind === TypeKind.Union;
+  }
+  isNominative(): this is NominativeType {
+    return this.kind === TypeKind.Nominative;
+  }
+  isTuple(): this is TupleType {
+    return this.kind === TypeKind.Tuple;
   }
 }
 
@@ -181,6 +188,17 @@ export class TypeofType extends Type {
   constructor(expression: string) {
     super();
     this.expression = expression;
+  }
+}
+
+// A tuple is an array whose values have different types. It's often used as the
+// return type of iterators like Object.entries().
+export class TupleType extends Type {
+  kind = TypeKind.Tuple;
+  typeArguments: Type[];
+  constructor(typeArguments: Type[]) {
+    super();
+    this.typeArguments = typeArguments;
   }
 }
 

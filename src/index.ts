@@ -103,6 +103,11 @@ export class Converter {
     if (asTypeofType) {
       return asTypeofType;
     }
+    if (isTupleType(tsType)) {
+      return new adt.TupleType(
+        tsType.typeArguments!.map(ty => this.convert(ty))
+      );
+    }
     return this.typeDefinition(tsType);
   }
 
@@ -280,6 +285,13 @@ function hasTypeArguments(
   tsType: ts.Type
 ): tsType is ts.TypeReference & { typeArguments: ReadonlyArray<ts.Type> } {
   return (tsType as any).typeArguments;
+}
+
+function isTupleType(tsType: ts.Type): tsType is ts.TupleType {
+  return (
+    hasTypeArguments(tsType) &&
+    Boolean(tsType.target.objectFlags & ts.ObjectFlags.Tuple)
+  );
 }
 
 // Removes all known TypeScript extensions from a file.
