@@ -41,6 +41,13 @@ export class Converter {
       (ts.TypeFlags.Boolean | ts.TypeFlags.BooleanLiteral)
     ) {
       return adt.booleanType;
+    } else if (tsType.flags & ts.TypeFlags.ESSymbol) {
+      return adt.symbolType;
+    } else if (tsType.flags & ts.TypeFlags.UniqueESSymbol) {
+      const { escapedName } = tsType as ts.UniqueESSymbolType;
+      return new adt.UniqueSymbolType(
+        ts.unescapeLeadingUnderscores(escapedName)
+      );
     } else if (tsType.flags & ts.TypeFlags.Null) {
       return adt.nullType;
     } else if (tsType.flags & ts.TypeFlags.Undefined) {

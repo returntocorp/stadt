@@ -37,4 +37,14 @@ const foo = array[0];
     );
     assert.deepEqual(ty, adt.neverType);
   });
+
+  it("should convert the generic symbol type", () => {
+    const ty = util.parseAndGetType("foo", "const foo: symbol = Symbol('foo')");
+    assert.deepEqual(ty, adt.symbolType);
+  });
+
+  it("should convert the unique symbol type", () => {
+    const ty = util.parseAndGetType("foo", "const foo = Symbol('foo')");
+    assert(ty.isUniqueSymbol());
+  });
 });

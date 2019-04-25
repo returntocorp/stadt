@@ -10,6 +10,8 @@ export enum TypeKind {
   Never = "never",
   Any = "any",
   Union = "union",
+  Symbol = "symbol",
+  UniqueSymbol = "UniqueSymbol",
   Intersection = "intersection",
   Untranslated = "untranslated",
   Literal = "literal",
@@ -30,6 +32,8 @@ export abstract class Type {
       this.kind === TypeKind.String ||
       this.kind === TypeKind.Number ||
       this.kind === TypeKind.Boolean ||
+      this.kind === TypeKind.Symbol ||
+      this.kind === TypeKind.UniqueSymbol ||
       this.kind === TypeKind.Null ||
       this.kind === TypeKind.Undefined ||
       this.kind === TypeKind.Void ||
@@ -55,15 +59,27 @@ export abstract class Type {
   isTuple(): this is TupleType {
     return this.kind === TypeKind.Tuple;
   }
+  isUniqueSymbol(): this is UniqueSymbolType {
+    return this.kind === TypeKind.UniqueSymbol;
+  }
 }
 
 // Non-object types that are built in to the JavaScript language (or to our type
-// system).
+// system). Instead of constructing new values of this type, use the
+// already-defined ones: anyType, stringType, etc.
 export class PrimitiveType extends Type {
   kind: PrimitiveKind;
   constructor(kind: PrimitiveKind) {
     super();
     this.kind = kind;
+  }
+}
+export class UniqueSymbolType extends PrimitiveType {
+  kind = TypeKind.UniqueSymbol as PrimitiveKind;
+  name: string;
+  constructor(name: string) {
+    super(TypeKind.UniqueSymbol);
+    this.name = name;
   }
 }
 
@@ -90,6 +106,8 @@ type PrimitiveKind =
   | TypeKind.String
   | TypeKind.Number
   | TypeKind.Boolean
+  | TypeKind.Symbol
+  | TypeKind.UniqueSymbol
   | TypeKind.Null
   | TypeKind.Undefined
   | TypeKind.Void
@@ -269,3 +287,4 @@ export const voidType = new PrimitiveType(TypeKind.Void);
 export const neverType = new PrimitiveType(TypeKind.Never);
 export const anyType = new PrimitiveType(TypeKind.Any);
 export const nonPrimitiveType = new NonPrimitiveType();
+export const symbolType = new PrimitiveType(TypeKind.Symbol);

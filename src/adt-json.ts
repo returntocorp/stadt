@@ -87,6 +87,10 @@ export function fromJSON(typeJSON: any): adt.Type {
       return adt.anyType;
     case adt.TypeKind.NonPrimitive:
       return adt.nonPrimitiveType;
+    case adt.TypeKind.Symbol:
+      return adt.symbolType;
+    case adt.TypeKind.UniqueSymbol:
+      return new adt.UniqueSymbolType(typeJSON.name);
     case adt.TypeKind.Union:
       return new adt.UnionType(typeJSON.types.map(fromJSON));
     case adt.TypeKind.Intersection:
