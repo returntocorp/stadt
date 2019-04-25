@@ -40,6 +40,18 @@ describe("JSON serialization", () => {
     );
 
     {
+      const intersectionType = new adt.IntersectionType([
+        new adt.ObjectType([
+          { name: "a", type: adt.numberType, optional: false }
+        ]),
+        new adt.ObjectType([
+          { name: "b", type: adt.stringType, optional: false }
+        ])
+      ]);
+      checkRoundTrip("intersection type", intersectionType);
+    }
+
+    {
       const parameters = [
         { name: "x", type: adt.stringType },
         { name: "y", type: new adt.UnionType([adt.stringType, adt.numberType]) }

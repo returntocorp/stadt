@@ -10,6 +10,7 @@ export enum TypeKind {
   Never = "never",
   Any = "any",
   Union = "union",
+  Intersection = "intersection",
   Untranslated = "untranslated",
   Literal = "literal",
   Object = "object",
@@ -43,6 +44,9 @@ export abstract class Type {
   }
   isUnion(): this is UnionType {
     return this.kind === TypeKind.Union;
+  }
+  isIntersection(): this is UnionType {
+    return this.kind === TypeKind.Intersection;
   }
   isNominative(): this is NominativeType {
     return this.kind === TypeKind.Nominative;
@@ -100,6 +104,18 @@ export class LiteralType extends Type {
 // A union type includes all values in any of its constituent types.
 export class UnionType extends Type {
   kind = TypeKind.Union;
+  types: Type[];
+  constructor(types: Type[]) {
+    super();
+    this.types = types;
+  }
+}
+
+// An intersection type includes all values that are in *all* of its types. For
+// example, the type `{a: number} & {b: string}` includes values like `{a: 3, b:
+// "hi"}` but not `{a: number}`.
+export class IntersectionType extends Type {
+  kind = TypeKind.Intersection;
   types: Type[];
   constructor(types: Type[]) {
     super();

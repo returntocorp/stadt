@@ -57,6 +57,8 @@ export class Converter {
       return new adt.LiteralType(tsType.value);
     } else if (tsType.isUnion()) {
       return new adt.UnionType(tsType.types.map(ty => this.convert(ty)));
+    } else if (tsType.isIntersection()) {
+      return new adt.IntersectionType(tsType.types.map(ty => this.convert(ty)));
     } else if (tsType.flags & ts.TypeFlags.Object) {
       return this.convertObject(tsType as ts.ObjectType);
     } else if (tsType.isTypeParameter()) {

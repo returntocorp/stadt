@@ -16,7 +16,7 @@ export function toJSON(ty: adt.Type): any {
   ) {
     return ty;
   }
-  if (ty.isUnion()) {
+  if (ty.isUnion() || ty.isIntersection()) {
     return { kind: ty.kind, types: ty.types.map(toJSON) };
   }
   if (ty.isObject()) {
@@ -86,6 +86,8 @@ export function fromJSON(typeJSON: any): adt.Type {
       return adt.anyType;
     case adt.TypeKind.Union:
       return new adt.UnionType(typeJSON.types.map(fromJSON));
+    case adt.TypeKind.Intersection:
+      return new adt.IntersectionType(typeJSON.types.map(fromJSON));
     case adt.TypeKind.Untranslated:
       new adt.UntranslatedType(typeJSON.asString);
     case adt.TypeKind.Object: {
