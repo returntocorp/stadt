@@ -12,8 +12,6 @@ export enum TypeKind {
   Union = "union",
   Untranslated = "untranslated",
   Literal = "literal",
-  // This also includes functions/anything callable, since in JavaScript those
-  // are objects.
   Object = "object",
   // This is a type that's just a name. Objects constructed via `new Foo()` will
   // have nominative types.
@@ -57,10 +55,6 @@ export abstract class Type {
 // Non-object types that are built in to the JavaScript language (or to our type
 // system).
 export class PrimitiveType extends Type {
-  // `void` is the bottom type, the return type of functions that never return.
-  // `void` is a subtype of all types.
-  //
-  // `any` is the top type; all types are subtypes of it.
   kind: PrimitiveKind;
   constructor(kind: PrimitiveKind) {
     super();
@@ -68,6 +62,17 @@ export class PrimitiveType extends Type {
   }
 }
 
+// A function whose return value is irrelevant can be said to return `void`.
+// Since void is a subtype of all types, functions that take a callback whose
+// return value is irrelevant will typically take a function returning `void`.
+// It is an error to assign the return value of such a function to a variable.
+//
+// Conversely, `any` is a supertype of all types and effectively disables
+// typechecking.
+//
+// `never` is the type of functions that never return, either because they loop
+// or because they do abnormal things to control flow. It's mostly used for
+// things like `process.exit` and `assert.fail`.
 type PrimitiveKind =
   | TypeKind.String
   | TypeKind.Number
@@ -78,7 +83,9 @@ type PrimitiveKind =
   | TypeKind.Never
   | TypeKind.Any;
 
-// Represents the type of a string/numeric/boolean literal.
+// Represents the type of a string/numeric literal. For example,
+// HTMLMediaElement.canPlayType has return type `"probably" | "maybe" | ""`,
+// meaning it returns one of those three strings.
 export class LiteralType extends Type {
   kind = TypeKind.Literal;
   // TODO: boolean? It's a bit weird because TypeScript seems to define it as a
@@ -90,7 +97,7 @@ export class LiteralType extends Type {
   }
 }
 
-// This type represents one of the given types.
+// A union type includes all values in any of its constituent types.
 export class UnionType extends Type {
   kind = TypeKind.Union;
   types: Type[];
@@ -112,8 +119,12 @@ export class UntranslatedType extends Type {
   }
 }
 
+// The type of objects that aren't instances of a class or interface. This can
+// also used to output the definitions of classes/interfaces.
 export class ObjectType extends Type {
   kind = TypeKind.Object;
+  // This includes both properties and methods. For example, `Array` will have
+  // `length` and `pop` properties.
   properties: Map<string, Property>;
   /// A callable type can have multiple signatures if it has overloads. For
   /// example, fs.readFileSync returns a Buffer if no encoding is passed, but a
