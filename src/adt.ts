@@ -10,6 +10,8 @@ export enum TypeKind {
   Never = "never",
   Any = "any",
   Union = "union",
+  // Symbol is the generic type that all symbols share; UniqueSymbol is specific
+  // to each individual symbol instance.
   Symbol = "symbol",
   UniqueSymbol = "UniqueSymbol",
   Intersection = "intersection",
@@ -74,6 +76,9 @@ export class PrimitiveType extends Type {
     this.kind = kind;
   }
 }
+
+// Each Symbol object has its own unique type. No two Symbols will share the
+// same unique type, even if they're created with the same description.
 export class UniqueSymbolType extends PrimitiveType {
   kind = TypeKind.UniqueSymbol as PrimitiveKind;
   name: string;
@@ -162,8 +167,8 @@ export class UntranslatedType extends Type {
   }
 }
 
-// The type of objects that aren't instances of a class or interface. This can
-// also used to output the definitions of classes/interfaces.
+// Used to serialize a type that doesn't represent a class or interface. also
+// used to output the definitions of classes/interfaces.
 export class ObjectType extends Type {
   kind = TypeKind.Object;
   // This includes both properties and methods. For example, `Array` will have
@@ -188,17 +193,31 @@ export class ObjectType extends Type {
   }
 }
 
+// A type that has a proper name. We represent it by its fully-qualified name in
+// order to avoid infinite loops. If you have a TypeScript class/interface type
+// and you want to get at its proper type definition, pass it to
+// `Converter.typeDefinition`, which will return an `ObjectType`.
+//
+// This is also used to represent instantiations of generic types.
 export class NominativeType extends Type {
   kind = TypeKind.Nominative;
   // Human-readable name. This is not fully-qualified, so it's not guaranteed to
   // be unique.
   name: string;
   fullyQualifiedName: {
+    // If this is true, the type is defined by the language itself and fileName
+    // and packageName will be undefined.
     builtin: boolean;
-    fileName: string | undefined;
+    // Name of the package that defines the type. May be `@types/blah`.
+    // undefined if the file is not inside a package (e.g., it's in the project
+    // being analyzed).
     packageName: string | undefined;
+    // Name of the file inside the package that defines the type, including its
+    // extension. For files in other packages, this will usually end in `.d.ts`.
+    fileName: string | undefined;
     name: string;
   };
+  // If this is a generic type, these are the arguments passed to it, in order.
   typeArguments: Type[];
   constructor(
     name: string,
@@ -234,8 +253,8 @@ export class TypeParameterType extends Type {
 }
 
 // An anonymous type produced by TypeScript's `typeof` operator. This can
-// commonly show up when looking at the types of class objects; `Date` has
-// typeof `typeof Date`.
+// commonly show up when looking at the types of class objects; `Date` has type
+// `typeof Date`.
 export class TypeofType extends Type {
   kind = TypeKind.Typeof;
   expression: string;
@@ -274,7 +293,6 @@ export interface Parameter {
 
 export interface Signature {
   parameters: Parameter[];
-  // Functions that don't return a value have void return type.
   returnType: Type;
 }
 
