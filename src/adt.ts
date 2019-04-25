@@ -14,6 +14,7 @@ export enum TypeKind {
   Untranslated = "untranslated",
   Literal = "literal",
   Object = "object",
+  NonPrimitive = "nonprimitive",
   // This is a type that's just a name. Objects constructed via `new Foo()` will
   // have nominative types.
   Nominative = "nominative",
@@ -64,6 +65,14 @@ export class PrimitiveType extends Type {
     super();
     this.kind = kind;
   }
+}
+
+// This type represents any value that isn't a primitive (number, string,
+// boolean, symbol, null, or undefined). Typescript calls it `object` (note the
+// lowercase o), but that's confusing since Typescript also has `Object`, which
+// includes primitives.
+export class NonPrimitiveType extends Type {
+  kind = TypeKind.NonPrimitive;
 }
 
 // A function whose return value is irrelevant can be said to return `void`.
@@ -259,3 +268,4 @@ export const undefinedType = new PrimitiveType(TypeKind.Undefined);
 export const voidType = new PrimitiveType(TypeKind.Void);
 export const neverType = new PrimitiveType(TypeKind.Never);
 export const anyType = new PrimitiveType(TypeKind.Any);
+export const nonPrimitiveType = new NonPrimitiveType();

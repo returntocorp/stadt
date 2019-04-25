@@ -12,7 +12,8 @@ export function toJSON(ty: adt.Type): any {
     ty.kind == adt.TypeKind.Literal ||
     ty.kind == adt.TypeKind.Nominative ||
     ty.kind == adt.TypeKind.Parameter ||
-    ty.kind == adt.TypeKind.Typeof
+    ty.kind == adt.TypeKind.Typeof ||
+    ty.kind == adt.TypeKind.NonPrimitive
   ) {
     return ty;
   }
@@ -84,6 +85,8 @@ export function fromJSON(typeJSON: any): adt.Type {
       return adt.neverType;
     case adt.TypeKind.Any:
       return adt.anyType;
+    case adt.TypeKind.NonPrimitive:
+      return adt.nonPrimitiveType;
     case adt.TypeKind.Union:
       return new adt.UnionType(typeJSON.types.map(fromJSON));
     case adt.TypeKind.Intersection:

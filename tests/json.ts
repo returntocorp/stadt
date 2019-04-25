@@ -29,6 +29,7 @@ describe("JSON serialization", () => {
       checkRoundTrip("void type", adt.voidType);
       checkRoundTrip("never type", adt.neverType);
       checkRoundTrip("any type", adt.anyType);
+      checkRoundTrip("nonprimitive type", adt.nonPrimitiveType);
     });
 
     checkRoundTrip("string literal", new adt.LiteralType("foo bar"));

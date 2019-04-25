@@ -51,6 +51,8 @@ export class Converter {
       return adt.neverType;
     } else if (tsType.flags & ts.TypeFlags.Any) {
       return adt.anyType;
+    } else if (tsType.flags & ts.TypeFlags.NonPrimitive) {
+      return adt.nonPrimitiveType;
     } else if (tsType.isStringLiteral()) {
       return new adt.LiteralType(tsType.value);
     } else if (tsType.isNumberLiteral()) {

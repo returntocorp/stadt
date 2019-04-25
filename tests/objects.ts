@@ -5,6 +5,11 @@ import * as ts from "typescript";
 import * as util from "./util";
 
 describe("object type handling", () => {
+  it("converts the `object` nonprimitive type", () => {
+    const ty = util.parseAndGetType("foo", "const foo: object = {}");
+    assert.deepEqual(ty, adt.nonPrimitiveType);
+  });
+
   describe("structural types", () => {
     it("converts properties", () => {
       const ty = util.parseAndGetType("foo", 'const foo = {x: 1, y: "hello"}');
