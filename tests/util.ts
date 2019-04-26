@@ -3,45 +3,55 @@ import { Converter } from "../src/index";
 import * as ts from "typescript";
 // Parses the given string as source code.
 export function parse(
-  source: string
+  source: string,
+  options: { isJs: boolean } = { isJs: false }
 ): {
   checker: ts.TypeChecker;
   sourceFile: ts.SourceFile;
   host: ts.CompilerHost;
   program: ts.Program;
 } {
-  const options: ts.CompilerOptions = {
+  const compilerOptions: ts.CompilerOptions = {
     allowJs: true,
     target: ts.ScriptTarget.ES2019,
     strict: true
   };
+  const inputFileName = options.isJs ? "input.js" : "input.ts";
   const sourceFile = ts.createSourceFile(
-    "input.ts",
+    inputFileName,
     source,
     ts.ScriptTarget.ES2019
   );
-  const originalHost = ts.createCompilerHost(options);
+  const originalHost = ts.createCompilerHost(compilerOptions);
   const inMemoryHost: ts.CompilerHost = {
     ...originalHost,
     getSourceFile(fileName, languageVersion) {
-      return fileName === "input.ts"
+      return fileName === inputFileName
         ? sourceFile
         : originalHost.getSourceFile(fileName, languageVersion);
     },
     writeFile(_name, _text) {}
   };
-  const program = ts.createProgram(["input.ts"], options, inMemoryHost);
+  const program = ts.createProgram(
+    [inputFileName],
+    compilerOptions,
+    inMemoryHost
+  );
   return {
     checker: program.getTypeChecker(),
-    sourceFile: program.getSourceFile("input.ts")!,
+    sourceFile: program.getSourceFile(inputFileName)!,
     host: inMemoryHost,
     program
   };
 }
 
 // Parses the given source code, returning the type of the declared variable with the given name.
-export function parseAndGetType(name: string, source: string): adt.Type {
-  const { checker, sourceFile, host, program } = parse(source);
+export function parseAndGetType(
+  name: string,
+  source: string,
+  options?: { isJs: boolean }
+): adt.Type {
+  const { checker, sourceFile, host, program } = parse(source, options);
   let ty: ts.Type | undefined;
   function visit(node: ts.Node) {
     ts.isIdentifier;

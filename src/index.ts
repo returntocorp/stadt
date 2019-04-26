@@ -12,6 +12,10 @@ export class Converter {
   private readonly checker: ts.TypeChecker;
   private readonly sourceRoot: string | undefined;
   private readonly cache: WeakMap<ts.Type, adt.Type>;
+  // All the types that we're currently in the process of converting. Used to
+  // avoid blowing up the stack on circular types.
+  private currentlyConverting: WeakSet<ts.Type>;
+
   // sourceRoot is the root directory of all source files of the code itself (as
   // opposed to dependencies). It's used for relative-izing file names in fully
   // qualified names. If not set, all paths are absolute.
@@ -21,12 +25,18 @@ export class Converter {
     this.checker = program.getTypeChecker();
     this.sourceRoot = sourceRoot;
     this.cache = new WeakMap();
+    this.currentlyConverting = new WeakSet();
   }
 
   public convert(tsType: ts.Type): adt.Type {
+    if (this.currentlyConverting.has(tsType)) {
+      return this.untranslated(tsType);
+    }
+    this.currentlyConverting.add(tsType);
     if (!this.cache.has(tsType)) {
       this.cache.set(tsType, this.convertWithoutCache(tsType));
     }
+    this.currentlyConverting.delete(tsType);
     return this.cache.get(tsType)!;
   }
 

@@ -10,6 +10,27 @@ describe("object type handling", () => {
     assert.deepEqual(ty, adt.nonPrimitiveType);
   });
 
+  it("handles classes with functions that return `this`", () => {
+    // Note that this *has* to be parsed as JS, since TypeScript's inference
+    // engine works differently when parsing TypeScript.
+    const ty = util.parseAndGetType(
+      "foo",
+      `
+function Assertion() {
+}
+
+Assertion.prototype = {
+  assert: function() {
+    return this;
+  },
+};
+const foo = new Assertion;
+`,
+      { isJs: true }
+    );
+    assert.notEqual(ty.kind, adt.TypeKind.Untranslated);
+  });
+
   describe("structural types", () => {
     it("converts properties", () => {
       const ty = util.parseAndGetType("foo", 'const foo = {x: 1, y: "hello"}');
