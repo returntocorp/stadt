@@ -10,6 +10,12 @@ This package includes TypeScript as an optional peer dependency: if you don't
 install it, you can still get the type definitions, but you won't get any
 conversion logic.
 
+## Why does this exist?
+
+To help make static analysis of JavaScript and TypeScript easier to write as
+part of the [r2c](https://returntocorp.com/) analysis platform. Check out our
+site if that sounds like something you'd be interested in!
+
 ## What's supported?
 
 Currently supported:
