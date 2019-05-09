@@ -37,6 +37,7 @@ export function toJSON(ty: adt.Type): any {
   }
   if (ty.isTuple()) {
     return {
+      kind: ty.kind,
       typeArguments: ty.typeArguments.map(toJSON)
     };
   }

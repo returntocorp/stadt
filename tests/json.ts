@@ -42,6 +42,11 @@ describe("JSON serialization", () => {
       new adt.UnionType([new adt.LiteralType("blah"), adt.undefinedType])
     );
 
+    checkRoundTrip(
+      "tuple type",
+      new adt.TupleType([adt.stringType, adt.numberType])
+    );
+
     {
       const intersectionType = new adt.IntersectionType([
         new adt.ObjectType([
