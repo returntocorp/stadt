@@ -75,6 +75,25 @@ const foo: Foo = {name: "hello"};
       assert.propertyVal(ty, "name", "Foo");
     });
 
+    it("uses nominative serialization for prototype-style classes", () => {
+      const ty = util.parseAndGetType(
+        "foo",
+        `
+function Foo() {
+  this.prop = "hello";
+}
+
+Foo.prototype.getProp = function() {
+  const foo = this;
+  return foo.prop;
+}
+`,
+        { isJs: true }
+      );
+      assert.equal(ty.kind, adt.TypeKind.Nominative);
+      assert.propertyVal(ty, "name", "Foo");
+    });
+
     it("can handle a type with a recursive property", () => {
       const ty = util.parseAndGetType(
         "foo",

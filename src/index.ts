@@ -193,13 +193,27 @@ export class Converter {
       return undefined;
     }
     if (
-      !tsType.isClassOrInterface() &&
-      !(tsType.objectFlags & ts.ObjectFlags.Reference) &&
-      !(symbol.flags & ts.SymbolFlags.ValueModule)
+      symbol.flags &
+      (ts.SymbolFlags.ObjectLiteral | ts.SymbolFlags.TypeLiteral)
     ) {
       return undefined;
     }
+    const isNominative =
+      tsType.isClassOrInterface() ||
+      tsType.objectFlags & ts.ObjectFlags.Reference ||
+      symbol.flags & ts.SymbolFlags.ValueModule ||
+      (symbol.members && symbol.members.size > 0);
+    if (!isNominative) {
+      return undefined;
+    }
     const name = symbol.getName();
+    if (name.startsWith("__")) {
+      console.error(
+        "unexpectedly non-nominative type",
+        this.checker.typeToString(tsType)
+      );
+      return undefined;
+    }
     const typeArguments = hasTypeArguments(tsType) ? tsType.typeArguments : [];
     return new adt.NominativeType(
       name,
