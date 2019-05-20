@@ -172,6 +172,11 @@ export class Converter {
       // It's a constructor.
       return new adt.TypeofType(symbol.getName());
     }
+    const node = this.checker.typeToTypeNode(tsType);
+    if (node && ts.isTypeQueryNode(node)) {
+      return new adt.TypeofType(this.checker.symbolToString(symbol));
+    }
+    return;
   }
 
   // If this type has a name that we should use to reference it by, returns the

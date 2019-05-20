@@ -139,6 +139,30 @@ const foo = Outer;
     });
   });
 
+  describe("typeof types", () => {
+    it("jquery-ish", () => {
+      // This is what jQuery winds up being compiled to. We want to output it as
+      // `typeof jQuery` because otherwise we output the *entire* type of jQuery
+      // every time it gets used, which bloats the type file to hell.
+      const ty = util.parseAndGetType(
+        "jQuery",
+        `
+const jQuery = function() {
+  return {};
+};
+jQuery.fn = jQuery.prototype = {
+  constructor: jQuery,
+  init: function() {
+    return this;
+  },
+}
+`,
+        { isJs: true }
+      );
+      assert.deepEqual(ty, new adt.TypeofType("jQuery"));
+    });
+  });
+
   describe("array types", () => {
     it("infers the type of an array, including the element type", () => {
       const ty = util.parseAndGetType("foo", "const foo = [1, 2, 3]");
