@@ -54,7 +54,6 @@ export function parseAndGetType(
   const { checker, sourceFile, host, program } = parse(source, options);
   let ty: ts.Type | undefined;
   function visit(node: ts.Node) {
-    ts.isIdentifier;
     if (
       ts.isVariableDeclaration(node) &&
       ts.isIdentifier(node.name) &&
