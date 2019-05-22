@@ -206,8 +206,7 @@ export class Converter {
     const isNominative =
       tsType.isClassOrInterface() ||
       tsType.objectFlags & ts.ObjectFlags.Reference ||
-      symbol.flags & ts.SymbolFlags.ValueModule ||
-      (symbol.members && symbol.members.size > 0);
+      symbol.flags & ts.SymbolFlags.ValueModule;
     if (!isNominative) {
       return undefined;
     }
