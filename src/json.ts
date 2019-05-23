@@ -1,73 +1,113 @@
+// JSON representations of the stadt data types. Each type defined here is the
+// JSON version of its corresponding type defined in adt.ts; see that file for
+// what individual fields mean.
+
 import * as adt from "./adt";
+import { TypeKind } from "./adt";
 
-// Functions for converting ADT types to and from a JSON-encodable type. This is
-// mostly just doing things like converting maps to and from a dict of key-value
-// pairs. We value human/machine-readability of the representation over
-// compactness.
+export { TypeKind, PrimitiveKind } from "./adt";
 
-export function toJSON(ty: adt.Type): any {
-  if (
-    ty.isPrimitive() ||
-    ty.kind == adt.TypeKind.Untranslated ||
-    ty.kind == adt.TypeKind.Literal ||
-    ty.kind == adt.TypeKind.Nominative ||
-    ty.kind == adt.TypeKind.Parameter ||
-    ty.kind == adt.TypeKind.Typeof ||
-    ty.kind == adt.TypeKind.NonPrimitive
-  ) {
-    return ty;
-  }
-  if (ty.isUnion() || ty.isIntersection()) {
-    return { kind: ty.kind, types: ty.types.map(toJSON) };
-  }
-  if (ty.isObject()) {
-    const obj: any = {
-      kind: adt.TypeKind.Object
-    };
-    if (ty.callSignatures) {
-      obj["callSignatures"] = ty.callSignatures.map(signatureToJSON);
-    }
-    if (ty.properties.size != 0) {
-      obj["properties"] = [];
-      ty.properties.forEach(property =>
-        obj["properties"].push(propertyToJSON(property))
-      );
-    }
-    return obj;
-  }
-  if (ty.isTuple()) {
-    return {
-      kind: ty.kind,
-      typeArguments: ty.typeArguments.map(toJSON)
-    };
-  }
-  throw new Error(`Unhandled case ${ty.kind}`);
+export type TypeJSON =
+  | PrimitiveType
+  | NonPrimitiveType
+  | UniqueSymbolType
+  | LiteralType
+  | UnionType
+  | IntersectionType
+  | UntranslatedType
+  | ObjectType
+  | NominativeType
+  | TypeParameterType
+  | TypeofType
+  | TupleType;
+
+export interface PrimitiveType {
+  kind: adt.PrimitiveKind;
 }
 
-function signatureToJSON(sig: adt.Signature) {
-  return {
-    parameters: sig.parameters.map(parameterToJSON),
-    returnType: toJSON(sig.returnType)
+export interface NonPrimitiveType {
+  kind: TypeKind.NonPrimitive;
+}
+
+export interface UniqueSymbolType extends PrimitiveType {
+  kind: TypeKind.UniqueSymbol;
+  name: string;
+}
+
+export interface LiteralType {
+  kind: TypeKind.Literal;
+  value: string | number;
+}
+
+export interface UnionType {
+  kind: TypeKind.Union;
+  types: TypeJSON[];
+}
+
+export interface IntersectionType {
+  kind: TypeKind.Intersection;
+  types: TypeJSON[];
+}
+
+export interface UntranslatedType {
+  kind: TypeKind.Untranslated;
+  asString: string;
+}
+
+export interface ObjectType {
+  kind: TypeKind.Object;
+  properties: Property[];
+  callSignatures: adt.Signature[];
+}
+
+export interface NominativeType {
+  kind: TypeKind.Nominative;
+  name: string;
+  fullyQualifiedName: {
+    builtin: boolean;
+    packageName: string | undefined;
+    fileName: string | undefined;
+    name: string;
   };
 }
 
-function parameterToJSON(parameter: adt.Parameter) {
-  return {
-    name: parameter.name,
-    type: toJSON(parameter.type)
-  };
+export interface TypeParameterType {
+  kind: TypeKind.Parameter;
+  name: string;
 }
 
-function propertyToJSON(property: adt.Property): object {
-  return {
-    name: property.name,
-    optional: property.optional,
-    type: toJSON(property.type)
-  };
+export interface TypeofType {
+  kind: TypeKind.Typeof;
+  expression: string;
 }
 
-export function fromJSON(typeJSON: any): adt.Type {
-  switch (typeJSON.kind as adt.TypeKind) {
+export interface TupleType {
+  kind: TypeKind.Tuple;
+  typeArguments: TypeJSON[];
+}
+
+export interface Property {
+  name: string;
+  optional: boolean;
+  type: TypeJSON;
+}
+
+export interface Parameter {
+  name: string;
+  type: TypeJSON;
+}
+
+export interface Signature {
+  parameters: Parameter[];
+  returnType: TypeJSON;
+}
+
+export function toJSON(ty: adt.Type): TypeJSON {
+  return ty.toJSON();
+}
+
+export function fromJSON(typeJSON: TypeJSON): adt.Type {
+  switch (typeJSON.kind) {
     case adt.TypeKind.Literal:
       return new adt.LiteralType(typeJSON.value);
     case adt.TypeKind.String:
@@ -91,13 +131,13 @@ export function fromJSON(typeJSON: any): adt.Type {
     case adt.TypeKind.Symbol:
       return adt.symbolType;
     case adt.TypeKind.UniqueSymbol:
-      return new adt.UniqueSymbolType(typeJSON.name);
+      return new adt.UniqueSymbolType((typeJSON as UniqueSymbolType).name);
     case adt.TypeKind.Union:
       return new adt.UnionType(typeJSON.types.map(fromJSON));
     case adt.TypeKind.Intersection:
       return new adt.IntersectionType(typeJSON.types.map(fromJSON));
     case adt.TypeKind.Untranslated:
-      new adt.UntranslatedType(typeJSON.asString);
+      return new adt.UntranslatedType(typeJSON.asString);
     case adt.TypeKind.Object: {
       const properties = (typeJSON.properties || []).map(propertyFromJSON);
       const callSignatures = typeJSON.callSignatures

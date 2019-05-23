@@ -4,7 +4,7 @@ import * as path from "path";
 import * as deepEqual from "fast-deep-equal";
 
 export * from "./adt";
-export * from "./adt-json";
+export { fromJSON, TypeJSON } from "./json";
 
 export class Converter {
   private readonly host: ts.CompilerHost;

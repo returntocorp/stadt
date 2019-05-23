@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import * as json from "./json";
 
 export enum TypeKind {
   String = "string",
@@ -29,6 +30,7 @@ export enum TypeKind {
 
 export abstract class Type {
   abstract kind: TypeKind;
+  abstract toJSON(): json.TypeJSON;
   isPrimitive(): this is PrimitiveType {
     return (
       this.kind === TypeKind.String ||
@@ -75,16 +77,26 @@ export class PrimitiveType extends Type {
     super();
     this.kind = kind;
   }
+  toJSON(): json.PrimitiveType {
+    return { kind: this.kind };
+  }
 }
 
 // Each Symbol object has its own unique type. No two Symbols will share the
 // same unique type, even if they're created with the same description.
 export class UniqueSymbolType extends PrimitiveType {
-  kind = TypeKind.UniqueSymbol as PrimitiveKind;
+  kind: TypeKind.UniqueSymbol;
   name: string;
   constructor(name: string) {
     super(TypeKind.UniqueSymbol);
+    this.kind = TypeKind.UniqueSymbol;
     this.name = name;
+  }
+  toJSON(): json.UniqueSymbolType {
+    return {
+      kind: this.kind,
+      name: this.name
+    };
   }
 }
 
@@ -93,7 +105,16 @@ export class UniqueSymbolType extends PrimitiveType {
 // lowercase o), but that's confusing since Typescript also has `Object`, which
 // includes primitives.
 export class NonPrimitiveType extends Type {
-  kind = TypeKind.NonPrimitive;
+  kind: TypeKind.NonPrimitive;
+  constructor() {
+    super();
+    this.kind = TypeKind.NonPrimitive;
+  }
+  toJSON(): json.NonPrimitiveType {
+    return {
+      kind: this.kind
+    };
+  }
 }
 
 // A function whose return value is irrelevant can be said to return `void`.
@@ -107,7 +128,7 @@ export class NonPrimitiveType extends Type {
 // `never` is the type of functions that never return, either because they loop
 // or because they do abnormal things to control flow. It's mostly used for
 // things like `process.exit` and `assert.fail`.
-type PrimitiveKind =
+export type PrimitiveKind =
   | TypeKind.String
   | TypeKind.Number
   | TypeKind.Boolean
@@ -123,23 +144,37 @@ type PrimitiveKind =
 // HTMLMediaElement.canPlayType has return type `"probably" | "maybe" | ""`,
 // meaning it returns one of those three strings.
 export class LiteralType extends Type {
-  kind = TypeKind.Literal;
+  kind: TypeKind.Literal;
   // TODO: boolean? It's a bit weird because TypeScript seems to define it as a
   // union of `false | true`.
   value: string | number;
   constructor(value: string | number) {
     super();
+    this.kind = TypeKind.Literal;
     this.value = value;
+  }
+  toJSON(): json.LiteralType {
+    return {
+      kind: this.kind,
+      value: this.value
+    };
   }
 }
 
 // A union type includes all values in any of its constituent types.
 export class UnionType extends Type {
-  kind = TypeKind.Union;
+  kind: TypeKind.Union;
   types: Type[];
   constructor(types: Type[]) {
     super();
+    this.kind = TypeKind.Union;
     this.types = types;
+  }
+  toJSON(): json.UnionType {
+    return {
+      kind: this.kind,
+      types: this.types.map(ty => ty.toJSON())
+    };
   }
 }
 
@@ -147,30 +182,44 @@ export class UnionType extends Type {
 // example, the type `{a: number} & {b: string}` includes values like `{a: 3, b:
 // "hi"}` but not `{a: number}`.
 export class IntersectionType extends Type {
-  kind = TypeKind.Intersection;
+  kind: TypeKind.Intersection;
   types: Type[];
   constructor(types: Type[]) {
     super();
+    this.kind = TypeKind.Intersection;
     this.types = types;
+  }
+  toJSON(): json.IntersectionType {
+    return {
+      kind: this.kind,
+      types: this.types.map(ty => ty.toJSON())
+    };
   }
 }
 
 // A type that stadt didn't know how to translate.
 export class UntranslatedType extends Type {
-  kind = TypeKind.Untranslated;
+  kind: TypeKind.Untranslated;
   // TypeScript's representation of this type. Not machine-readable, just useful
   // for debugging.
   asString: string;
   constructor(asString: string) {
     super();
+    this.kind = TypeKind.Untranslated;
     this.asString = asString;
+  }
+  toJSON(): json.UntranslatedType {
+    return {
+      kind: this.kind,
+      asString: this.asString
+    };
   }
 }
 
 // Used to serialize a type that doesn't represent a class or interface. also
 // used to output the definitions of classes/interfaces.
 export class ObjectType extends Type {
-  kind = TypeKind.Object;
+  kind: TypeKind.Object;
   // This includes both properties and methods. For example, `Array` will have
   // `length` and `pop` properties.
   properties: Map<string, Property>;
@@ -180,6 +229,7 @@ export class ObjectType extends Type {
   callSignatures: Signature[];
   constructor(properties: Property[], callSignatures: Signature[] = []) {
     super();
+    this.kind = TypeKind.Object;
     this.properties = new Map();
     properties.forEach(prop => this.properties.set(prop.name, prop));
     this.callSignatures = callSignatures;
@@ -191,6 +241,21 @@ export class ObjectType extends Type {
   isCallable(): boolean {
     return this.callSignatures.length != 0;
   }
+  toJSON(): json.ObjectType {
+    const props: json.Property[] = [];
+    for (const prop of this.properties.values()) {
+      props.push({
+        name: prop.name,
+        optional: prop.optional,
+        type: prop.type.toJSON()
+      });
+    }
+    return {
+      kind: TypeKind.Object,
+      properties: props,
+      callSignatures: this.callSignatures
+    };
+  }
 }
 
 // A type that has a proper name. We represent it by its fully-qualified name in
@@ -200,7 +265,7 @@ export class ObjectType extends Type {
 //
 // This is also used to represent instantiations of generic types.
 export class NominativeType extends Type {
-  kind = TypeKind.Nominative;
+  kind: TypeKind.Nominative;
   // Human-readable name. This is not fully-qualified, so it's not guaranteed to
   // be unique.
   name: string;
@@ -230,6 +295,7 @@ export class NominativeType extends Type {
     typeArguments: Type[] = []
   ) {
     super();
+    this.kind = TypeKind.Nominative;
     this.name = name;
     this.fullyQualifiedName = {
       builtin: false,
@@ -239,16 +305,30 @@ export class NominativeType extends Type {
     };
     this.typeArguments = typeArguments;
   }
+  toJSON(): json.NominativeType {
+    return {
+      kind: this.kind,
+      name: this.name,
+      fullyQualifiedName: this.fullyQualifiedName
+    };
+  }
 }
 
 // A type parameter is a parameter such as K or V that shows up in the
 // *definition* of a generic type.
 export class TypeParameterType extends Type {
-  kind = TypeKind.Parameter;
+  kind: TypeKind.Parameter;
   name: string;
   constructor(name: string) {
     super();
+    this.kind = TypeKind.Parameter;
     this.name = name;
+  }
+  toJSON(): json.TypeParameterType {
+    return {
+      kind: this.kind,
+      name: this.name
+    };
   }
 }
 
@@ -256,22 +336,36 @@ export class TypeParameterType extends Type {
 // commonly show up when looking at the types of class objects; `Date` has type
 // `typeof Date`.
 export class TypeofType extends Type {
-  kind = TypeKind.Typeof;
+  kind: TypeKind.Typeof;
   expression: string;
   constructor(expression: string) {
     super();
+    this.kind = TypeKind.Typeof;
     this.expression = expression;
+  }
+  toJSON(): json.TypeofType {
+    return {
+      kind: this.kind,
+      expression: this.expression
+    };
   }
 }
 
 // A tuple is an array whose values have different types. It's often used as the
 // return type of iterators like Object.entries().
 export class TupleType extends Type {
-  kind = TypeKind.Tuple;
+  kind: TypeKind.Tuple;
   typeArguments: Type[];
   constructor(typeArguments: Type[]) {
     super();
+    this.kind = TypeKind.Tuple;
     this.typeArguments = typeArguments;
+  }
+  toJSON(): json.TupleType {
+    return {
+      kind: this.kind,
+      typeArguments: this.typeArguments.map(ty => ty.toJSON())
+    };
   }
 }
 

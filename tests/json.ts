@@ -1,59 +1,55 @@
 import { assert } from "chai";
-import { Converter } from "../src/index";
-import * as adt from "../src/adt";
-import * as adtJSON from "../src/adt-json";
+import * as stadt from "../src/index";
 import * as ts from "typescript";
-import * as util from "./util";
 
-function roundTrip(ty: adt.Type): adt.Type {
-  return adtJSON.fromJSON(adtJSON.toJSON(ty));
+function roundTrip(ty: stadt.Type): stadt.Type {
+  return stadt.fromJSON(ty.toJSON());
 }
 
 // Serializes and deserializes the given object, then asserts that the result is
 // deeply equal to the original.
-function checkRoundTrip(description: string, ty: adt.Type) {
+function checkRoundTrip(description: string, ty: stadt.Type) {
   it(description, () => {
-    const roundTripped = adtJSON.fromJSON(adtJSON.toJSON(ty));
-    assert.deepEqual(roundTripped, ty);
+    assert.deepEqual(roundTrip(ty), ty);
   });
 }
 
 describe("JSON serialization", () => {
   describe("serializing and then deserializing", () => {
     describe("primitive types", () => {
-      checkRoundTrip("string type", adt.stringType);
-      checkRoundTrip("number type", adt.numberType);
-      checkRoundTrip("boolean type", adt.booleanType);
-      checkRoundTrip("null type", adt.nullType);
-      checkRoundTrip("undefined type", adt.undefinedType);
-      checkRoundTrip("void type", adt.voidType);
-      checkRoundTrip("never type", adt.neverType);
-      checkRoundTrip("any type", adt.anyType);
-      checkRoundTrip("nonprimitive type", adt.nonPrimitiveType);
-      checkRoundTrip("symbol type", adt.symbolType);
-      checkRoundTrip("unique symbol type", new adt.UniqueSymbolType("123"));
+      checkRoundTrip("string type", stadt.stringType);
+      checkRoundTrip("number type", stadt.numberType);
+      checkRoundTrip("boolean type", stadt.booleanType);
+      checkRoundTrip("null type", stadt.nullType);
+      checkRoundTrip("undefined type", stadt.undefinedType);
+      checkRoundTrip("void type", stadt.voidType);
+      checkRoundTrip("never type", stadt.neverType);
+      checkRoundTrip("any type", stadt.anyType);
+      checkRoundTrip("nonprimitive type", stadt.nonPrimitiveType);
+      checkRoundTrip("symbol type", stadt.symbolType);
+      checkRoundTrip("unique symbol type", new stadt.UniqueSymbolType("123"));
     });
 
-    checkRoundTrip("string literal", new adt.LiteralType("foo bar"));
-    checkRoundTrip("number literal", new adt.LiteralType(123456));
+    checkRoundTrip("string literal", new stadt.LiteralType("foo bar"));
+    checkRoundTrip("number literal", new stadt.LiteralType(123456));
 
     checkRoundTrip(
       "union type",
-      new adt.UnionType([new adt.LiteralType("blah"), adt.undefinedType])
+      new stadt.UnionType([new stadt.LiteralType("blah"), stadt.undefinedType])
     );
 
     checkRoundTrip(
       "tuple type",
-      new adt.TupleType([adt.stringType, adt.numberType])
+      new stadt.TupleType([stadt.stringType, stadt.numberType])
     );
 
     {
-      const intersectionType = new adt.IntersectionType([
-        new adt.ObjectType([
-          { name: "a", type: adt.numberType, optional: false }
+      const intersectionType = new stadt.IntersectionType([
+        new stadt.ObjectType([
+          { name: "a", type: stadt.numberType, optional: false }
         ]),
-        new adt.ObjectType([
-          { name: "b", type: adt.stringType, optional: false }
+        new stadt.ObjectType([
+          { name: "b", type: stadt.stringType, optional: false }
         ])
       ]);
       checkRoundTrip("intersection type", intersectionType);
@@ -61,16 +57,19 @@ describe("JSON serialization", () => {
 
     {
       const parameters = [
-        { name: "x", type: adt.stringType },
-        { name: "y", type: new adt.UnionType([adt.stringType, adt.numberType]) }
+        { name: "x", type: stadt.stringType },
+        {
+          name: "y",
+          type: new stadt.UnionType([stadt.stringType, stadt.numberType])
+        }
       ];
-      const signature: adt.Signature = {
+      const signature: stadt.Signature = {
         parameters,
-        returnType: new adt.UnionType([adt.nullType, adt.undefinedType])
+        returnType: new stadt.UnionType([stadt.nullType, stadt.undefinedType])
       };
       checkRoundTrip(
         "callable object type",
-        adt.ObjectType.newFunction([signature])
+        stadt.ObjectType.newFunction([signature])
       );
     }
 
@@ -80,10 +79,10 @@ describe("JSON serialization", () => {
           {
             name: "prop",
             optional: false,
-            type: adt.stringType
+            type: stadt.stringType
           }
         ];
-        const ty = new adt.ObjectType(properties);
+        const ty = new stadt.ObjectType(properties);
         assert.deepEqual(roundTrip(ty), ty);
       });
 
@@ -92,10 +91,10 @@ describe("JSON serialization", () => {
           {
             name: "prop",
             optional: true,
-            type: adt.stringType
+            type: stadt.stringType
           }
         ];
-        const ty = new adt.ObjectType(properties);
+        const ty = new stadt.ObjectType(properties);
         assert.deepEqual(roundTrip(ty), ty);
       });
     });
