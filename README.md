@@ -41,16 +41,9 @@ Currently supported:
 ## Serialization format
 
 stadt's data types use JSON as their serialization mechanism, and so can be
-consumed in your language of choice. See `src/adt.ts` for documentation on what
-the data types look like. The JSON serialization format is similar to the
-in-memory representation, with a few changes; maps are represented as objects,
-etc.
-
-Some general notes:
-
-- Each serialized type has a `kind` field, the values of which are described by
-  the `TypeKind` enum. Typically, a TypeKind of `Foo` will mean that the
-  corresponding TypeScript class is `FooType`.
+consumed in your language of choice. See `src/json.ts` for documentation on what
+the data types look like, and see `src/adt.ts` for documentation on what the
+corresponding fields mean.
 
 ## Demo
 
