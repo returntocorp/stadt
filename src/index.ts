@@ -203,10 +203,12 @@ export class Converter {
     ) {
       return undefined;
     }
+    const node = this.checker.typeToTypeNode(tsType);
     const isNominative =
       tsType.isClassOrInterface() ||
       tsType.objectFlags & ts.ObjectFlags.Reference ||
-      symbol.flags & ts.SymbolFlags.ValueModule;
+      symbol.flags & ts.SymbolFlags.ValueModule ||
+      (node && ts.isTypeReferenceNode(node));
     if (!isNominative) {
       return undefined;
     }
