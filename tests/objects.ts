@@ -197,4 +197,21 @@ jQuery.fn = jQuery.prototype = {
       assert.deepEqual(ty, new adt.TypeofType("__class"));
     });
   });
+
+  describe("types with type parameters", () => {
+    it("infers the type parameter of an array type", () => {
+      const ty = util.parseAndGetType("foo", "const foo = [1, 2, 3]");
+      assert.deepEqual(
+        ty,
+        new adt.NominativeType(
+          "Array",
+          {
+            builtin: true,
+            name: "Array"
+          },
+          [adt.numberType]
+        )
+      );
+    });
+  });
 });

@@ -69,6 +69,7 @@ export interface NominativeType {
     fileName: string | undefined;
     name: string;
   };
+  typeArguments: TypeJSON[];
 }
 
 export interface TypeParameterType {
@@ -146,7 +147,11 @@ export function fromJSON(typeJSON: TypeJSON): adt.Type {
       return new adt.ObjectType(properties, callSignatures);
     }
     case adt.TypeKind.Nominative: {
-      return new adt.NominativeType(typeJSON.name, typeJSON.fullyQualifiedName);
+      return new adt.NominativeType(
+        typeJSON.name,
+        typeJSON.fullyQualifiedName,
+        typeJSON.typeArguments.map(fromJSON)
+      );
     }
     case adt.TypeKind.Parameter: {
       return new adt.TypeParameterType(typeJSON.name);

@@ -1,6 +1,7 @@
 import { assert } from "chai";
 import * as stadt from "../src/index";
 import * as ts from "typescript";
+import * as util from "./util";
 
 function roundTrip(ty: stadt.Type): stadt.Type {
   return stadt.fromJSON(ty.toJSON());
@@ -95,6 +96,11 @@ describe("JSON serialization", () => {
           }
         ];
         const ty = new stadt.ObjectType(properties);
+        assert.deepEqual(roundTrip(ty), ty);
+      });
+
+      it("object with a parameter", () => {
+        const ty = util.parseAndGetType("foo", "const foo = [1, 2, 3]");
         assert.deepEqual(roundTrip(ty), ty);
       });
     });

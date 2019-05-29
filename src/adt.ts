@@ -309,7 +309,8 @@ export class NominativeType extends Type {
     return {
       kind: this.kind,
       name: this.name,
-      fullyQualifiedName: this.fullyQualifiedName
+      fullyQualifiedName: this.fullyQualifiedName,
+      typeArguments: this.typeArguments.map(ty => ty.toJSON())
     };
   }
 }
