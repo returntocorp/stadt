@@ -33,8 +33,8 @@
     "prepare": "npm run-script build"
   },
   "author": "r2c",
-  "license": "UNLICENSED",
-  "private": true,
+  "license": "MIT",
+  "repository": "https://github.com/returntocorp/stadt",
   "husky": {
     "hooks": {
       "pre-commit": "pretty-quick --staged"
