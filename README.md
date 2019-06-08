@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/returntocorp/stadt/tree/master.svg?style=svg)](https://circleci.com/gh/returntocorp/stadt/tree/master)
+
 # `stadt`: a friendly representation of TypeScript types
 
 This package is both:
