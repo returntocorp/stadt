@@ -161,6 +161,10 @@ jQuery.fn = jQuery.prototype = {
       );
       assert.deepEqual(ty, new adt.TypeofType("jQuery"));
     });
+
+    it("stringifies typeof types using the `typeof` keyword", () => {
+      assert.equal(new adt.TypeofType("jQuery").toString(), "typeof jQuery");
+    });
   });
 
   describe("array types", () => {
@@ -181,6 +185,14 @@ jQuery.fn = jQuery.prototype = {
       "const foo: [number, string] = [1, 'two']"
     );
     assert.deepEqual(ty, new adt.TupleType([adt.numberType, adt.stringType]));
+  });
+
+  it("stringifies tuples using array-ish syntax", () => {
+    const ty = util.parseAndGetType(
+      "foo",
+      "const foo: [number, string] = [1, 'two']"
+    );
+    assert.equal(ty.toString(), "[number, string]");
   });
 
   describe("class objects", () => {
@@ -211,6 +223,40 @@ jQuery.fn = jQuery.prototype = {
           },
           [adt.numberType]
         )
+      );
+    });
+  });
+
+  describe("stringification", () => {
+    it("stringifies generic types using <> syntax", () => {
+      const ty = util.parseAndGetType(
+        "foo",
+        "const foo: Map<string, number> = new Map()"
+      );
+      assert.equal(ty.toString(), "Map<string, number>");
+    });
+
+    it("stringifies objects by listing their properties", () => {
+      const ty = util.parseAndGetType("foo", "const foo = {x: 1, y: 'hello'}");
+      assert.equal(ty.toString(), "{x: number; y: string}");
+    });
+
+    it("lists a single signature by itself", () => {
+      const ty = util.parseAndGetType("foo", "const foo = Math.round");
+      assert.equal(ty.toString(), "(x: number) => number");
+    });
+
+    it("separates multiple signatures via semicolons", () => {
+      const ty = util.parseAndGetType(
+        "foo",
+        `
+declare function func(x: number): number;
+declare function func(x: string): string;
+const foo = func;`
+      );
+      assert.equal(
+        ty.toString(),
+        "{(x: number) => number; (x: string) => string}"
       );
     });
   });

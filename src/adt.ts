@@ -31,6 +31,9 @@ export enum TypeKind {
 export abstract class Type {
   abstract kind: TypeKind;
   abstract toJSON(): json.TypeJSON;
+  // The format is not specified, but intended to be close to TypeScript's. This
+  // is for *human* consumption only.
+  abstract toString(): string;
   isPrimitive(): this is PrimitiveType {
     return (
       this.kind === TypeKind.String ||
@@ -45,6 +48,7 @@ export abstract class Type {
       this.kind === TypeKind.Any
     );
   }
+
   isObject(): this is ObjectType {
     return this.kind === TypeKind.Object;
   }
@@ -80,6 +84,30 @@ export class PrimitiveType extends Type {
   toJSON(): json.PrimitiveType {
     return { kind: this.kind };
   }
+  toString(): string {
+    switch (this.kind) {
+      case TypeKind.String:
+        return "string";
+      case TypeKind.Number:
+        return "number";
+      case TypeKind.Boolean:
+        return "boolean";
+      case TypeKind.Symbol:
+        return "Symbol";
+      case TypeKind.UniqueSymbol:
+        return "[symbol type]";
+      case TypeKind.Null:
+        return "null";
+      case TypeKind.Undefined:
+        return "undefined";
+      case TypeKind.Void:
+        return "void";
+      case TypeKind.Never:
+        return "never";
+      case TypeKind.Any:
+        return "any";
+    }
+  }
 }
 
 // Each Symbol object has its own unique type. No two Symbols will share the
@@ -114,6 +142,9 @@ export class NonPrimitiveType extends Type {
     return {
       kind: this.kind
     };
+  }
+  toString(): string {
+    return "object";
   }
 }
 
@@ -159,6 +190,9 @@ export class LiteralType extends Type {
       value: this.value
     };
   }
+  toString(): string {
+    return JSON.stringify(this.value);
+  }
 }
 
 // A union type includes all values in any of its constituent types.
@@ -175,6 +209,9 @@ export class UnionType extends Type {
       kind: this.kind,
       types: this.types.map(ty => ty.toJSON())
     };
+  }
+  toString(): string {
+    return this.types.map(ty => ty.toString()).join(" | ");
   }
 }
 
@@ -195,6 +232,9 @@ export class IntersectionType extends Type {
       types: this.types.map(ty => ty.toJSON())
     };
   }
+  toString(): string {
+    return this.types.map(ty => ty.toString()).join(" & ");
+  }
 }
 
 // A type that stadt didn't know how to translate.
@@ -213,6 +253,9 @@ export class UntranslatedType extends Type {
       kind: this.kind,
       asString: this.asString
     };
+  }
+  toString(): string {
+    return `[untranslated ${this.asString}]`;
   }
 }
 
@@ -255,6 +298,20 @@ export class ObjectType extends Type {
       properties: props,
       callSignatures: this.callSignatures
     };
+  }
+  toString() {
+    const fields = [];
+    for (const prop of this.properties.values()) {
+      fields.push(stringifyProperty(prop));
+    }
+    for (const sig of this.callSignatures) {
+      fields.push(stringifySignature(sig));
+    }
+    if (this.callSignatures.length == 1 && this.properties.size == 0) {
+      return fields[0];
+    } else {
+      return `{${fields.join("; ")}}`;
+    }
   }
 }
 
@@ -313,6 +370,13 @@ export class NominativeType extends Type {
       typeArguments: this.typeArguments.map(ty => ty.toJSON())
     };
   }
+  toString() {
+    if (this.typeArguments.length == 0) {
+      return this.name;
+    }
+    const args = this.typeArguments.map(arg => arg.toString()).join(", ");
+    return `${this.name}<${args}>`;
+  }
 }
 
 // A type parameter is a parameter such as K or V that shows up in the
@@ -330,6 +394,9 @@ export class TypeParameterType extends Type {
       kind: this.kind,
       name: this.name
     };
+  }
+  toString() {
+    return this.name;
   }
 }
 
@@ -350,6 +417,9 @@ export class TypeofType extends Type {
       expression: this.expression
     };
   }
+  toString() {
+    return `typeof ${this.expression}`;
+  }
 }
 
 // A tuple is an array whose values have different types. It's often used as the
@@ -367,6 +437,10 @@ export class TupleType extends Type {
       kind: this.kind,
       typeArguments: this.typeArguments.map(ty => ty.toJSON())
     };
+  }
+  toString() {
+    const elements = this.typeArguments.map(ty => ty.toString()).join(", ");
+    return `[${elements}]`;
   }
 }
 
@@ -389,6 +463,18 @@ export interface Parameter {
 export interface Signature {
   parameters: Parameter[];
   returnType: Type;
+}
+
+function stringifyProperty(prop: Property): string {
+  const optionalMarker = prop.optional ? "?" : "";
+  return `${prop.name}${optionalMarker}: ${prop.type.toString()}`;
+}
+
+function stringifySignature(sig: Signature): string {
+  const params = sig.parameters.map(
+    ({ name, type }) => `${name}: ${type.toString()}`
+  );
+  return `(${params.join(", ")}) => ${sig.returnType.toString()}`;
 }
 
 export const stringType = new PrimitiveType(TypeKind.String);

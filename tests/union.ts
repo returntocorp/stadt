@@ -29,4 +29,14 @@ const foo: {a: number} & {b: string} = {a: 3, b: 'hi'};
     ]);
     assert.deepEqual(ty, expected);
   });
+
+  it("stringifies union types by separating them with |", () => {
+    const ty = new adt.UnionType([adt.numberType, adt.stringType]);
+    assert.equal(ty.toString(), "number | string");
+  });
+
+  it("stringifies intersection types by separating them with &", () => {
+    const ty = new adt.IntersectionType([adt.booleanType, adt.symbolType]);
+    assert.equal(ty.toString(), "boolean & Symbol");
+  });
 });

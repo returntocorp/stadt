@@ -15,4 +15,8 @@ describe("literal type handling", () => {
     const ty = util.parseAndGetType("foo", "const foo = false");
     assert.deepEqual(ty, adt.booleanType);
   });
+  it("stringifies literal types as literals", () => {
+    assert.equal(new adt.LiteralType(2).toString(), "2");
+    assert.equal(new adt.LiteralType("foo").toString(), '"foo"');
+  });
 });
