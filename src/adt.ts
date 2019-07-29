@@ -49,26 +49,79 @@ export abstract class Type {
     );
   }
 
-  isObject(): this is ObjectType {
-    return this.kind === TypeKind.Object;
+  isString(): this is PrimitiveType {
+    return this.kind === TypeKind.String;
   }
-  isTypeof(): this is TypeofType {
-    return this.kind === TypeKind.Typeof;
+  isNumber(): this is PrimitiveType {
+    return this.kind === TypeKind.Number;
+  }
+  isBoolean(): this is PrimitiveType {
+    return this.kind === TypeKind.Boolean;
+  }
+  isNull(): this is PrimitiveType {
+    return this.kind === TypeKind.Null;
+  }
+  isUndefined(): this is PrimitiveType {
+    return this.kind === TypeKind.Undefined;
+  }
+  isVoid(): this is PrimitiveType {
+    return this.kind === TypeKind.Void;
+  }
+  isNever(): this is PrimitiveType {
+    return this.kind === TypeKind.Never;
+  }
+  isAny(): this is PrimitiveType {
+    return this.kind === TypeKind.Any;
+  }
+  isSymbol(): this is PrimitiveType {
+    return this.kind === TypeKind.Symbol;
   }
   isUnion(): this is UnionType {
     return this.kind === TypeKind.Union;
   }
-  isIntersection(): this is UnionType {
+  isUniqueSymbol(): this is UniqueSymbolType {
+    return this.kind === TypeKind.UniqueSymbol;
+  }
+  isIntersection(): this is IntersectionType {
     return this.kind === TypeKind.Intersection;
+  }
+  isUntranslated(): this is UntranslatedType {
+    return this.kind === TypeKind.Untranslated;
+  }
+  isLiteral(): this is LiteralType {
+    return this.kind === TypeKind.Literal;
+  }
+  isObject(): this is ObjectType {
+    return this.kind === TypeKind.Object;
+  }
+  isNonPrimitive(): this is NonPrimitiveType {
+    return this.kind === TypeKind.NonPrimitive;
   }
   isNominative(): this is NominativeType {
     return this.kind === TypeKind.Nominative;
   }
+  isParameter(): this is TypeParameterType {
+    return this.kind === TypeKind.Parameter;
+  }
+  isTypeof(): this is TypeofType {
+    return this.kind === TypeKind.Typeof;
+  }
   isTuple(): this is TupleType {
     return this.kind === TypeKind.Tuple;
   }
-  isUniqueSymbol(): this is UniqueSymbolType {
-    return this.kind === TypeKind.UniqueSymbol;
+
+  // If this is a union type, returns the list of all of its member types,
+  // recursively. Else, just returns `[this]`.
+  possibleTypes(): Type[] {
+    if (this.isUnion()) {
+      let types: Type[] = [];
+      for (const inner of this.types) {
+        types = types.concat(inner.possibleTypes());
+      }
+      return types;
+    } else {
+      return [this];
+    }
   }
 }
 
