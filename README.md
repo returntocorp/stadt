@@ -88,6 +88,9 @@ Array.push @ 1290 : (...items: { ts: Type; position: number; text: string; adt: 
 
 The output contains a serialized version of each AST node, its position, its type as stringified by TypeScript, and the output as a stadt object.
 
+You can also use [the stadt explorer](https://explorer.r2c.dev), which lets you
+interactively type some JS and get an AST annotated with the types.
+
 ## What's in a name?
 
 "stadt" is an anagram of "TS ADT".
