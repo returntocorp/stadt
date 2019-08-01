@@ -45,16 +45,26 @@ export abstract class Type {
       this.kind === TypeKind.Undefined ||
       this.kind === TypeKind.Void ||
       this.kind === TypeKind.Never ||
-      this.kind === TypeKind.Any
+      this.kind === TypeKind.Any ||
+      this.kind === TypeKind.Literal
     );
   }
 
-  isString(): this is PrimitiveType {
-    return this.kind === TypeKind.String;
+  // Returns true on string literals and values of type string.
+  isString(): this is PrimitiveType | LiteralType {
+    return (
+      this.kind === TypeKind.String ||
+      (this.isLiteral() && typeof this.value === "string")
+    );
   }
-  isNumber(): this is PrimitiveType {
-    return this.kind === TypeKind.Number;
+  // Returns true on number literals and values of type number.
+  isNumber(): this is PrimitiveType | LiteralType {
+    return (
+      this.kind === TypeKind.Number ||
+      (this.isLiteral() && typeof this.value === "number")
+    );
   }
+
   isBoolean(): this is PrimitiveType {
     return this.kind === TypeKind.Boolean;
   }
