@@ -120,17 +120,20 @@ export abstract class Type {
     return this.kind === TypeKind.Tuple;
   }
 
-  // If this is a union type, returns the list of all of its member types,
-  // recursively. Else, just returns `[this]`.
-  possibleTypes(): Type[] {
+  // If this is a union type, returns true if *all* members satisfy the
+  // predicate. If this is an intersection type, returns true if *any* member
+  // satisfies the predicate. Otherwise, returns true if this type satisfies the
+  // predicate.
+  //
+  // Note that the predicate will never be called on union/intersection types.
+  // If you want it to be, you'll need to roll your own logic.
+  mustSatisfy(predicate: (ty: Type) => boolean): boolean {
     if (this.isUnion()) {
-      let types: Type[] = [];
-      for (const inner of this.types) {
-        types = types.concat(inner.possibleTypes());
-      }
-      return types;
+      return this.types.every(ty => ty.mustSatisfy(predicate));
+    } else if (this.isIntersection()) {
+      return this.types.some(ty => ty.mustSatisfy(predicate));
     } else {
-      return [this];
+      return predicate(this);
     }
   }
 }

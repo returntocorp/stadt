@@ -41,25 +41,47 @@ const foo: {a: number} & {b: string} = {a: 3, b: 'hi'};
   });
 });
 
-describe("possibleTypes", () => {
-  it("returns a list for non-union types", () => {
+describe("mustSatisfy", () => {
+  it("simply calls the function on non-union/non-intersection types", () => {
     const ty = new adt.LiteralType("foo");
-    assert.sameMembers(ty.possibleTypes(), [ty]);
+    assert(ty.mustSatisfy(t => t === ty));
   });
 
-  it("returns all the members of a union type", () => {
-    const ty1 = new adt.LiteralType("foo");
-    const ty2 = new adt.LiteralType(1234);
-    const union = new adt.UnionType([ty1, ty2]);
-    assert.sameMembers(union.possibleTypes(), [ty1, ty2]);
+  it("returns true if all members of a union satisfy the predicate", () => {
+    const ty = new adt.UnionType([
+      new adt.LiteralType("foo"),
+      new adt.LiteralType("bar")
+    ]);
+    assert(ty.mustSatisfy(t => t.isLiteral()));
   });
 
-  it("recurses into unions whose members are unions", () => {
-    const ty1 = new adt.LiteralType("foo");
-    const ty2 = new adt.LiteralType(1234);
-    const innerUnion = new adt.UnionType([ty1, ty2]);
-    const ty3 = adt.booleanType;
-    const union = new adt.UnionType([innerUnion, ty3]);
-    assert.sameMembers(union.possibleTypes(), [ty1, ty2, ty3]);
+  it("returns false if a single union member doesn't satisfy the predicate", () => {
+    const ty = new adt.UnionType([new adt.LiteralType("foo"), adt.booleanType]);
+    assert(!ty.mustSatisfy(t => t.isLiteral()));
+  });
+
+  it("returns true if a single intersection member satisfies the predicate", () => {
+    const ty = new adt.IntersectionType([
+      new adt.LiteralType("foo"),
+      adt.booleanType
+    ]);
+    assert(ty.mustSatisfy(t => t.isLiteral()));
+  });
+
+  it("returns false if no intersection member satisfies the predicate", () => {
+    const ty = new adt.IntersectionType([
+      new adt.LiteralType("foo"),
+      adt.booleanType
+    ]);
+    assert(!ty.mustSatisfy(t => t.isNull()));
+  });
+
+  it("can handle a nested tree", () => {
+    // This type doesn't actually make sense, but oh well.
+    const ty = new adt.UnionType([
+      new adt.IntersectionType([adt.numberType, adt.symbolType]),
+      new adt.IntersectionType([new adt.LiteralType(123), adt.undefinedType])
+    ]);
+    assert(ty.mustSatisfy(t => t.isNumber()));
   });
 });
