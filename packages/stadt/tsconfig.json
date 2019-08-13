@@ -1,9 +1,8 @@
 {
+  "extends": "../tsconfig.settings.json",
   "compilerOptions": {
-    "target": "es2015",
-    "strict": true,
     "outDir": "./dist",
-    "module": "commonjs",
-    "declaration": true
-  }
+    "rootDir": "./src"
+  },
+  "include": ["./src/**/*"]
 }

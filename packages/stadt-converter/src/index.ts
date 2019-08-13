@@ -1,7 +1,7 @@
 import * as stadt from "stadt";
 import * as ts from "typescript";
 import * as path from "path";
-import * as deepEqual from "fast-deep-equal";
+import deepEqual from "fast-deep-equal";
 
 export class Converter {
   private readonly host: ts.CompilerHost;
@@ -74,7 +74,9 @@ export class Converter {
     } else if (tsType.isUnion()) {
       return new stadt.UnionType(tsType.types.map(ty => this.convert(ty)));
     } else if (tsType.isIntersection()) {
-      return new stadt.IntersectionType(tsType.types.map(ty => this.convert(ty)));
+      return new stadt.IntersectionType(
+        tsType.types.map(ty => this.convert(ty))
+      );
     } else if (tsType.flags & ts.TypeFlags.Object) {
       return this.convertObject(tsType as ts.ObjectType);
     } else if (tsType.isTypeParameter()) {
@@ -304,7 +306,10 @@ function collapseSignatures(signatures: stadt.Signature[]): stadt.Signature[] {
 
 // Returns true if the two signatures are identical for our purposes. Two
 // signatures are identical if they only differ in parameter names.
-function signaturesShouldBeCollapsed(sigA: stadt.Signature, sigB: stadt.Signature) {
+function signaturesShouldBeCollapsed(
+  sigA: stadt.Signature,
+  sigB: stadt.Signature
+) {
   if (sigA.parameters.length != sigB.parameters.length) {
     return false;
   }

@@ -1,9 +1,9 @@
 {
+  "extends": "../tsconfig.settings.json",
   "compilerOptions": {
-    "target": "es2019",
-    "strict": true,
     "outDir": "./dist",
-    "module": "commonjs",
-    "declaration": true
-  }
+    "rootDir": "./src"
+  },
+  "include": ["./src/**/*"],
+  "references": [{ "path": "../stadt" }]
 }
