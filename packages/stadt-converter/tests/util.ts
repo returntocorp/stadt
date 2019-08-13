@@ -1,4 +1,4 @@
-import * as adt from "../src/adt";
+import * as stadt from "stadt";
 import { Converter } from "../src/index";
 import * as ts from "typescript";
 // Parses the given string as source code.
@@ -50,7 +50,7 @@ export function parseAndGetType(
   name: string,
   source: string,
   options?: { isJs: boolean }
-): adt.Type {
+): stadt.Type {
   const { checker, sourceFile, host, program } = parse(source, options);
   let ty: ts.Type | undefined;
   function visit(node: ts.Node) {

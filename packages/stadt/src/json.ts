@@ -5,8 +5,6 @@
 import * as adt from "./adt";
 import { TypeKind } from "./adt";
 
-export { TypeKind, PrimitiveKind } from "./adt";
-
 export type TypeJSON =
   | PrimitiveType
   | NonPrimitiveType

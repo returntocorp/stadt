@@ -1,4 +1,3 @@
-import * as assert from "assert";
 import * as json from "./json";
 
 export enum TypeKind {
@@ -344,7 +343,9 @@ export class ObjectType extends Type {
     this.callSignatures = callSignatures;
   }
   static newFunction(callSignatures: Signature[]) {
-    assert(callSignatures.length != 0);
+    if (callSignatures.length == 0) {
+      throw new Error("Cannot construct a function with no signatures");
+    }
     return new ObjectType([], callSignatures);
   }
   isCallable(): boolean {

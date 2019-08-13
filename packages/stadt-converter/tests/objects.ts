@@ -1,13 +1,11 @@
 import { assert } from "chai";
-import { Converter } from "../src/index";
-import * as adt from "../src/adt";
-import * as ts from "typescript";
+import * as stadt from "stadt";
 import * as util from "./util";
 
 describe("object type handling", () => {
   it("converts the `object` nonprimitive type", () => {
     const ty = util.parseAndGetType("foo", "const foo: object = {}");
-    assert.deepEqual(ty, adt.nonPrimitiveType);
+    assert.deepEqual(ty, stadt.nonPrimitiveType);
   });
 
   it("handles classes with functions that return `this`", () => {
@@ -28,7 +26,7 @@ const foo = new Assertion;
 `,
       { isJs: true }
     );
-    assert.notEqual(ty.kind, adt.TypeKind.Untranslated);
+    assert.notEqual(ty.kind, stadt.TypeKind.Untranslated);
   });
 
   describe("structural types", () => {
@@ -38,25 +36,25 @@ const foo = new Assertion;
         {
           name: "x",
           optional: false,
-          type: adt.numberType
+          type: stadt.numberType
         },
         {
           name: "y",
           optional: false,
-          type: adt.stringType
+          type: stadt.stringType
         }
       ];
-      assert.deepEqual(ty, new adt.ObjectType(properties));
+      assert.deepEqual(ty, new stadt.ObjectType(properties));
     });
   });
 
   describe("nominative types", () => {
     it("lists the type of a builtin using its name", () => {
       let ty = util.parseAndGetType("foo", "const foo = new Date()");
-      assert.equal(ty.kind, adt.TypeKind.Nominative);
+      assert.equal(ty.kind, stadt.TypeKind.Nominative);
       assert.deepEqual(
         ty,
-        new adt.NominativeType("Date", {
+        new stadt.NominativeType("Date", {
           builtin: true,
           name: "Date"
         })
@@ -71,7 +69,7 @@ interface Foo { name: string };
 const foo: Foo = {name: "hello"};
 `
       );
-      assert.equal(ty.kind, adt.TypeKind.Nominative);
+      assert.equal(ty.kind, stadt.TypeKind.Nominative);
       assert.propertyVal(ty, "name", "Foo");
     });
 
@@ -90,7 +88,7 @@ Foo.prototype.getProp = function() {
 `,
         { isJs: true }
       );
-      assert.equal(ty.kind, adt.TypeKind.Nominative);
+      assert.equal(ty.kind, stadt.TypeKind.Nominative);
       assert.propertyVal(ty, "name", "Foo");
     });
 
@@ -104,7 +102,7 @@ interface LinkedNode {
 };
 const foo: LinkedNode = { value: 123, next: {value: 456}}`
       );
-      assert.equal(ty.kind, adt.TypeKind.Nominative);
+      assert.equal(ty.kind, stadt.TypeKind.Nominative);
       assert.propertyVal(ty, "name", "LinkedNode");
     });
 
@@ -118,7 +116,7 @@ next?: LinkedNode
 };
 const foo: LinkedNode = { value: 123, next: {value: 456}}`
       );
-      assert.equal(ty.kind, adt.TypeKind.Nominative);
+      assert.equal(ty.kind, stadt.TypeKind.Nominative);
       assert.propertyVal(ty, "name", "LinkedNode");
     });
 
@@ -134,7 +132,7 @@ export class Inner extends Outer {}
 const foo = Outer;
 `
       );
-      assert.equal(ty.kind, adt.TypeKind.Nominative);
+      assert.equal(ty.kind, stadt.TypeKind.Nominative);
       assert.propertyVal(ty, "name", "Outer");
     });
   });
@@ -159,11 +157,7 @@ jQuery.fn = jQuery.prototype = {
 `,
         { isJs: true }
       );
-      assert.deepEqual(ty, new adt.TypeofType("jQuery"));
-    });
-
-    it("stringifies typeof types using the `typeof` keyword", () => {
-      assert.equal(new adt.TypeofType("jQuery").toString(), "typeof jQuery");
+      assert.deepEqual(ty, new stadt.TypeofType("jQuery"));
     });
   });
 
@@ -172,8 +166,8 @@ jQuery.fn = jQuery.prototype = {
       const ty = util.parseAndGetType("foo", "const foo = [1, 2, 3]");
       assert.deepEqual(
         ty,
-        new adt.NominativeType("Array", { builtin: true, name: "Array" }, [
-          adt.numberType
+        new stadt.NominativeType("Array", { builtin: true, name: "Array" }, [
+          stadt.numberType
         ])
       );
     });
@@ -184,29 +178,21 @@ jQuery.fn = jQuery.prototype = {
       "foo",
       "const foo: [number, string] = [1, 'two']"
     );
-    assert.deepEqual(ty, new adt.TupleType([adt.numberType, adt.stringType]));
-  });
-
-  it("stringifies tuples using array-ish syntax", () => {
-    const ty = util.parseAndGetType(
-      "foo",
-      "const foo: [number, string] = [1, 'two']"
-    );
-    assert.equal(ty.toString(), "[number, string]");
+    assert.deepEqual(ty, new stadt.TupleType([stadt.numberType, stadt.stringType]));
   });
 
   describe("class objects", () => {
     it("class object is not immediately assigned", () => {
       const ty = util.parseAndGetType("foo", "class Foo {}; const foo = Foo");
-      assert.deepEqual(ty, new adt.TypeofType("Foo"));
+      assert.deepEqual(ty, new stadt.TypeofType("Foo"));
     });
     it("class object is immediately assigned", () => {
       const ty = util.parseAndGetType("foo", "const foo = class Foo {}");
-      assert.deepEqual(ty, new adt.TypeofType("Foo"));
+      assert.deepEqual(ty, new stadt.TypeofType("Foo"));
     });
     it("class object is immediately assigned and anonymous", () => {
       const ty = util.parseAndGetType("foo", "const foo = class {}");
-      assert.deepEqual(ty, new adt.TypeofType("__class"));
+      assert.deepEqual(ty, new stadt.TypeofType("__class"));
     });
   });
 
@@ -215,48 +201,14 @@ jQuery.fn = jQuery.prototype = {
       const ty = util.parseAndGetType("foo", "const foo = [1, 2, 3]");
       assert.deepEqual(
         ty,
-        new adt.NominativeType(
+        new stadt.NominativeType(
           "Array",
           {
             builtin: true,
             name: "Array"
           },
-          [adt.numberType]
+          [stadt.numberType]
         )
-      );
-    });
-  });
-
-  describe("stringification", () => {
-    it("stringifies generic types using <> syntax", () => {
-      const ty = util.parseAndGetType(
-        "foo",
-        "const foo: Map<string, number> = new Map()"
-      );
-      assert.equal(ty.toString(), "Map<string, number>");
-    });
-
-    it("stringifies objects by listing their properties", () => {
-      const ty = util.parseAndGetType("foo", "const foo = {x: 1, y: 'hello'}");
-      assert.equal(ty.toString(), "{x: number; y: string}");
-    });
-
-    it("lists a single signature by itself", () => {
-      const ty = util.parseAndGetType("foo", "const foo = Math.round");
-      assert.equal(ty.toString(), "(x: number) => number");
-    });
-
-    it("separates multiple signatures via semicolons", () => {
-      const ty = util.parseAndGetType(
-        "foo",
-        `
-declare function func(x: number): number;
-declare function func(x: string): string;
-const foo = func;`
-      );
-      assert.equal(
-        ty.toString(),
-        "{(x: number) => number; (x: string) => string}"
       );
     });
   });

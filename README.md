@@ -2,15 +2,14 @@
 
 # `stadt`: a friendly representation of TypeScript types
 
-This package is both:
+This repository contains both
 
-- a definition of a series of interfaces that represent TypeScript types in a
+- `stadt`, a definition of a series of interfaces that represent TypeScript types in a
   format that's amenable for static analysis (the ADT format)
-- a library for converting a TypeScript type to ADT format.
+- `stadt-converter`, a library for converting a TypeScript type to ADT format.
 
-This package includes TypeScript as an optional peer dependency: if you don't
-install it, you can still get the type definitions, but you won't get any
-conversion logic.
+This is split into two libraries because `stadt-converter` has a runtime
+dependency on TypeScript, but `stadt` itself doesn't.
 
 ## Why does this exist?
 

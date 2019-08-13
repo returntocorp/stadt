@@ -1,26 +1,25 @@
 import { assert } from "chai";
 import { Converter } from "../src/index";
-import * as adt from "../src/adt";
-import * as ts from "typescript";
+import * as stadt from "stadt";
 import * as util from "./util";
 
 describe("function type handling", () => {
   it("should convert an arrow function", () => {
     const ty = util.parseAndGetType("foo", "const foo = (x) => Number(x)");
     const sig = {
-      parameters: [{ name: "x", type: adt.anyType }],
-      returnType: adt.numberType
+      parameters: [{ name: "x", type: stadt.anyType }],
+      returnType: stadt.numberType
     };
-    assert.deepEqual(ty, adt.ObjectType.newFunction([sig]));
+    assert.deepEqual(ty, stadt.ObjectType.newFunction([sig]));
   });
 
   it("should convert a method on a builtin", () => {
     const ty = util.parseAndGetType("foo", "const foo = Math.round");
     const sig = {
-      parameters: [{ name: "x", type: adt.numberType }],
-      returnType: adt.numberType
+      parameters: [{ name: "x", type: stadt.numberType }],
+      returnType: stadt.numberType
     };
-    assert.deepEqual(ty, adt.ObjectType.newFunction([sig]));
+    assert.deepEqual(ty, stadt.ObjectType.newFunction([sig]));
   });
 
   it("should convert a method on a builtin that's being invoked", () => {
@@ -33,11 +32,11 @@ describe("function type handling", () => {
     const ty = checker.getTypeAtLocation(token);
     const sig = {
       parameters: [],
-      returnType: adt.stringType
+      returnType: stadt.stringType
     };
     assert.deepEqual(
       new Converter(host, program).convert(ty),
-      adt.ObjectType.newFunction([sig])
+      stadt.ObjectType.newFunction([sig])
     );
   });
 
@@ -57,7 +56,7 @@ declare function foo(): void;
         checker.getTypeAtLocation(token)
       );
       assert(ty.isObject());
-      assert.lengthOf((ty as adt.ObjectType).callSignatures, 1);
+      assert.lengthOf((ty as stadt.ObjectType).callSignatures, 1);
     });
 
     it("should collapse signatures that differ only in parameter names", () => {
@@ -71,7 +70,7 @@ declare function foo(y: number): void;
         checker.getTypeAtLocation(token)
       );
       assert(ty.isObject());
-      assert.lengthOf((ty as adt.ObjectType).callSignatures, 1);
+      assert.lengthOf((ty as stadt.ObjectType).callSignatures, 1);
     });
 
     it("should not collapse signatures with different argument types", () => {
@@ -85,7 +84,7 @@ declare function foo(x: string): void;
         checker.getTypeAtLocation(token)
       );
       assert(ty.isObject());
-      assert.lengthOf((ty as adt.ObjectType).callSignatures, 2);
+      assert.lengthOf((ty as stadt.ObjectType).callSignatures, 2);
     });
 
     it("should not collapse signatures with different return types", () => {
@@ -99,7 +98,7 @@ declare function foo(x: number): any;
         checker.getTypeAtLocation(token)
       );
       assert(ty.isObject());
-      assert.lengthOf((ty as adt.ObjectType).callSignatures, 2);
+      assert.lengthOf((ty as stadt.ObjectType).callSignatures, 2);
     });
   });
 });

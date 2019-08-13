@@ -1,7 +1,7 @@
 // A small program that converts all types present in a single source file.
 // Useful for debugging purposes.
 
-import * as adt from "./adt";
+import * as stadt from "stadt";
 import * as ts from "typescript";
 import * as util from "util";
 import { Converter } from "./index";
@@ -16,13 +16,13 @@ function convertAll(
   host: ts.CompilerHost,
   program: ts.Program,
   sourceFile: ts.SourceFile
-): { ts: ts.Type; position: number; text: string; adt: adt.Type }[] {
+): { ts: ts.Type; position: number; text: string; adt: stadt.Type }[] {
   const checker = program.getTypeChecker();
   const typePairs: {
     ts: ts.Type;
     position: number;
     text: string;
-    adt: adt.Type;
+    adt: stadt.Type;
   }[] = [];
   const seen: WeakSet<ts.Type> = new WeakSet();
   const converter = new Converter(host, program);

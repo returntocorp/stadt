@@ -1,17 +1,14 @@
-import * as adt from "./adt";
+import * as stadt from "stadt";
 import * as ts from "typescript";
 import * as path from "path";
 import * as deepEqual from "fast-deep-equal";
-
-export * from "./adt";
-export { fromJSON, TypeJSON } from "./json";
 
 export class Converter {
   private readonly host: ts.CompilerHost;
   private readonly program: ts.Program;
   private readonly checker: ts.TypeChecker;
   private readonly sourceRoot: string | undefined;
-  private readonly cache: WeakMap<ts.Type, adt.Type>;
+  private readonly cache: WeakMap<ts.Type, stadt.Type>;
   // All the types that we're currently in the process of converting. Used to
   // avoid blowing up the stack on circular types.
   private currentlyConverting: WeakSet<ts.Type>;
@@ -28,7 +25,7 @@ export class Converter {
     this.currentlyConverting = new WeakSet();
   }
 
-  public convert(tsType: ts.Type): adt.Type {
+  public convert(tsType: ts.Type): stadt.Type {
     if (this.currentlyConverting.has(tsType)) {
       return this.untranslated(tsType);
     }
@@ -40,54 +37,54 @@ export class Converter {
     return this.cache.get(tsType)!;
   }
 
-  private convertWithoutCache(tsType: ts.Type): adt.Type {
+  private convertWithoutCache(tsType: ts.Type): stadt.Type {
     // Primitive types.
     if (tsType.flags & ts.TypeFlags.String) {
-      return adt.stringType;
+      return stadt.stringType;
     } else if (tsType.flags & ts.TypeFlags.Number) {
-      return adt.numberType;
+      return stadt.numberType;
     } else if (
       tsType.flags &
       (ts.TypeFlags.Boolean | ts.TypeFlags.BooleanLiteral)
     ) {
-      return adt.booleanType;
+      return stadt.booleanType;
     } else if (tsType.flags & ts.TypeFlags.ESSymbol) {
-      return adt.symbolType;
+      return stadt.symbolType;
     } else if (tsType.flags & ts.TypeFlags.UniqueESSymbol) {
       const { escapedName } = tsType as ts.UniqueESSymbolType;
-      return new adt.UniqueSymbolType(
+      return new stadt.UniqueSymbolType(
         ts.unescapeLeadingUnderscores(escapedName)
       );
     } else if (tsType.flags & ts.TypeFlags.Null) {
-      return adt.nullType;
+      return stadt.nullType;
     } else if (tsType.flags & ts.TypeFlags.Undefined) {
-      return adt.undefinedType;
+      return stadt.undefinedType;
     } else if (tsType.flags & ts.TypeFlags.Void) {
-      return adt.voidType;
+      return stadt.voidType;
     } else if (tsType.flags & ts.TypeFlags.Never) {
-      return adt.neverType;
+      return stadt.neverType;
     } else if (tsType.flags & ts.TypeFlags.Any) {
-      return adt.anyType;
+      return stadt.anyType;
     } else if (tsType.flags & ts.TypeFlags.NonPrimitive) {
-      return adt.nonPrimitiveType;
+      return stadt.nonPrimitiveType;
     } else if (tsType.isStringLiteral()) {
-      return new adt.LiteralType(tsType.value);
+      return new stadt.LiteralType(tsType.value);
     } else if (tsType.isNumberLiteral()) {
-      return new adt.LiteralType(tsType.value);
+      return new stadt.LiteralType(tsType.value);
     } else if (tsType.isUnion()) {
-      return new adt.UnionType(tsType.types.map(ty => this.convert(ty)));
+      return new stadt.UnionType(tsType.types.map(ty => this.convert(ty)));
     } else if (tsType.isIntersection()) {
-      return new adt.IntersectionType(tsType.types.map(ty => this.convert(ty)));
+      return new stadt.IntersectionType(tsType.types.map(ty => this.convert(ty)));
     } else if (tsType.flags & ts.TypeFlags.Object) {
       return this.convertObject(tsType as ts.ObjectType);
     } else if (tsType.isTypeParameter()) {
-      return new adt.TypeParameterType(tsType.symbol.name);
+      return new stadt.TypeParameterType(tsType.symbol.name);
     }
     return this.untranslated(tsType);
   }
 
-  public typeDefinition(tsType: ts.ObjectType): adt.ObjectType {
-    const properties: adt.Property[] = this.checker
+  public typeDefinition(tsType: ts.ObjectType): stadt.ObjectType {
+    const properties: stadt.Property[] = this.checker
       .getPropertiesOfType(tsType)
       .map(prop => {
         const tsType = this.checker.getTypeOfSymbolAtLocation(
@@ -105,17 +102,17 @@ export class Converter {
       tsType,
       ts.SignatureKind.Call
     );
-    let callSignatures: adt.Signature[] | undefined;
+    let callSignatures: stadt.Signature[] | undefined;
     if (tsSignatures.length) {
       callSignatures = tsSignatures.map(sig => this.convertSignature(sig));
       if (callSignatures.length < 10) {
         callSignatures = collapseSignatures(callSignatures);
       }
     }
-    return new adt.ObjectType(properties, callSignatures);
+    return new stadt.ObjectType(properties, callSignatures);
   }
 
-  private convertObject(tsType: ts.ObjectType): adt.Type {
+  private convertObject(tsType: ts.ObjectType): stadt.Type {
     const asNominativeType = this.asNominativeType(tsType);
     if (asNominativeType) {
       return asNominativeType;
@@ -125,7 +122,7 @@ export class Converter {
       return asTypeofType;
     }
     if (isTupleType(tsType)) {
-      return new adt.TupleType(
+      return new stadt.TupleType(
         tsType.typeArguments!.map(ty => this.convert(ty))
       );
     }
@@ -135,11 +132,11 @@ export class Converter {
   // Constructs a type without even trying to translate it. This is public so
   // that if `convert` throws due to a stack overflow or something, the caller
   // can catch and then fall back to this method.
-  public untranslated(tsType: ts.Type): adt.UntranslatedType {
-    return new adt.UntranslatedType(this.checker.typeToString(tsType));
+  public untranslated(tsType: ts.Type): stadt.UntranslatedType {
+    return new stadt.UntranslatedType(this.checker.typeToString(tsType));
   }
 
-  private convertSignature(tsSignature: ts.Signature): adt.Signature {
+  private convertSignature(tsSignature: ts.Signature): stadt.Signature {
     const parameters = tsSignature.parameters.map(parameter => {
       // TODO: Can we distinguish optional parameters here? It's legal to pass
       // `undefined` in place of an optional parameter, but that doesn't show up
@@ -163,18 +160,18 @@ export class Converter {
   }
 
   // If this should be converted as a 'typeof type', returns that.
-  private asTypeofType(tsType: ts.ObjectType): adt.TypeofType | undefined {
+  private asTypeofType(tsType: ts.ObjectType): stadt.TypeofType | undefined {
     const symbol = tsType.symbol;
     if (!symbol) {
       return;
     }
     if (symbol.flags & ts.SymbolFlags.Class) {
       // It's a constructor.
-      return new adt.TypeofType(symbol.getName());
+      return new stadt.TypeofType(symbol.getName());
     }
     const node = this.checker.typeToTypeNode(tsType);
     if (node && ts.isTypeQueryNode(node)) {
-      return new adt.TypeofType(this.checker.symbolToString(symbol));
+      return new stadt.TypeofType(this.checker.symbolToString(symbol));
     }
     return;
   }
@@ -183,11 +180,11 @@ export class Converter {
   // appropriate nominative type.
   private asNominativeType(
     tsType: ts.ObjectType
-  ): adt.NominativeType | undefined {
+  ): stadt.NominativeType | undefined {
     if (tsType.aliasSymbol) {
       const name = tsType.aliasSymbol.getName();
       const typeArguments = tsType.aliasTypeArguments || [];
-      return new adt.NominativeType(
+      return new stadt.NominativeType(
         name,
         this.fullyQualifiedName(tsType.aliasSymbol),
         typeArguments.map(ty => this.convert(ty))
@@ -221,7 +218,7 @@ export class Converter {
       return undefined;
     }
     const typeArguments = hasTypeArguments(tsType) ? tsType.typeArguments : [];
-    return new adt.NominativeType(
+    return new stadt.NominativeType(
       name,
       this.fullyQualifiedName(symbol),
       typeArguments.map(ty => this.convert(ty))
@@ -290,7 +287,7 @@ export class Converter {
 
 // Removes duplicate signatures. Signatures are duplicate if they only differ in
 // parameter names. NOTE: the algorithm used is O(n^2).
-function collapseSignatures(signatures: adt.Signature[]): adt.Signature[] {
+function collapseSignatures(signatures: stadt.Signature[]): stadt.Signature[] {
   if (signatures.length < 2) {
     return signatures;
   }
@@ -307,7 +304,7 @@ function collapseSignatures(signatures: adt.Signature[]): adt.Signature[] {
 
 // Returns true if the two signatures are identical for our purposes. Two
 // signatures are identical if they only differ in parameter names.
-function signaturesShouldBeCollapsed(sigA: adt.Signature, sigB: adt.Signature) {
+function signaturesShouldBeCollapsed(sigA: stadt.Signature, sigB: stadt.Signature) {
   if (sigA.parameters.length != sigB.parameters.length) {
     return false;
   }
