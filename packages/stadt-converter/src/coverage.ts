@@ -76,9 +76,7 @@ if (require.main === module) {
     });
     const indentedAdtString = adtString.replace(/^/gm, "    ");
     console.log(
-      `${typePair.text} @ ${
-        typePair.position
-      } : ${tsString} ➡\n${indentedAdtString}\n`
+      `${typePair.text} @ ${typePair.position} : ${tsString} ➡\n${indentedAdtString}\n`
     );
   }
 }

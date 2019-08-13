@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 - 2019-08-13
+
+The conversion logic has been split off from stadt into `stadt-converter`,
+meaning that `stadt` proper only contains definitions for the objects
+representing types, as well as JSON conversion logic. There are no changes to
+the individual APIs.
+
+We did this so you can depend on `stadt` itself without having to worry about
+requiring TypeScript.
+
 ## 0.2.0 - 2019-07-31
 
 `stadt.Type` now has the following methods:
