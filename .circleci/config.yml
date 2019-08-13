@@ -13,9 +13,12 @@ jobs:
           keys:
             - v1-dependencies-{{ checksum "yarn.lock" }}
             - v1-dependencies-
-      - run: npm install
+      - run: yarn
       - save_cache:
           key: v1-dependencies-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
-      - run: npm test
+      - run: yarn workspace stadt build
+      - run: yarn workspace stadt test
+      - run: yarn workspace stadt-converter build
+      - run: yarn workspace stadt-converter test
