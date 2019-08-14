@@ -18,7 +18,5 @@ jobs:
           key: v1-dependencies-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
-      - run: yarn workspace stadt build
-      - run: yarn workspace stadt test
-      - run: yarn workspace stadt-converter build
-      - run: yarn workspace stadt-converter test
+      - run: yarn run lerna bootstrap
+      - run: yarn run lerna run test

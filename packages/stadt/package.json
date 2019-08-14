@@ -17,12 +17,12 @@
     "@types/node": "^11.13.4",
     "chai": "^4.2.0",
     "mocha": "^6.1.4",
-    "ts-node": "^8.0.3",
+    "ts-mocha": "^6.0.0",
     "typescript": "^3.5.1"
   },
   "scripts": {
-    "build": "tsc",
-    "test": "mocha --extension \"ts\" --recursive -r ts-node/register tests/*.ts",
+    "build": "tsc --build",
+    "test": "ts-mocha tests/*.ts",
     "prepare": "yarn build"
   }
 }
