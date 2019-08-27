@@ -138,7 +138,9 @@ export function fromJSON(typeJSON: TypeJSON): adt.Type {
     case adt.TypeKind.Untranslated:
       return new adt.UntranslatedType(typeJSON.asString);
     case adt.TypeKind.Object: {
-      const properties = (typeJSON.properties || []).map(propertyFromJSON);
+      const properties = Array.isArray(typeJSON.properties)
+        ? typeJSON.properties.map(propertyFromJSON)
+        : [];
       const callSignatures = typeJSON.callSignatures
         ? typeJSON.callSignatures.map(signatureFromJSON)
         : undefined;
