@@ -1,6 +1,6 @@
 {
   "name": "stadt-converter",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Converts TypeScript types to their stadt representation.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -13,7 +13,7 @@
   "private": false,
   "dependencies": {
     "fast-deep-equal": "^2.0.1",
-    "stadt": "^0.3.0",
+    "stadt": "^0.3.1",
     "typescript": "^3.5.1"
   },
   "devDependencies": {
